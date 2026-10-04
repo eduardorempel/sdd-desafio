@@ -17,6 +17,8 @@ packages = ["reembolso"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+# Mostra os nomes dos casos da seção 7 da spec com acentos, sem escapar (T-022).
+disable_test_id_escaping_and_forfeit_all_rights_to_community_support = true
 
 [tool.ruff]
 target-version = "py312"

@@ -229,7 +229,7 @@
     `::test_todo_item_cita_rn`
   - **Commit:**
 
-- [ ] **T-022** — Tabela da §7 como teste parametrizado, com uma linha por caso e
+- [x] **T-022** — Tabela da §7 como teste parametrizado, com uma linha por caso e
   o nome do caso como `id` (`test(T-022)`).
   - **Atende:** spec §7 (todas as RN citadas na tabela)
   - **Aceite:** os 37 casos da §7 passam e aparecem no relatório do pytest com o
