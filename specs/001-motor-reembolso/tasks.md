@@ -186,7 +186,7 @@
 
 ## Fase 4 — Saída e CLI
 
-- [ ] **T-018** — `saida.py` + encoder JSON: `valor_considerado`,
+- [x] **T-018** — `saida.py` + encoder JSON: `valor_considerado`,
   `valor_reembolsavel` e `total_reembolsavel` com duas casas; `valor_informado`
   sem quantizar; `null` onde a spec pede nulo; `Decimal` dentro de `colaborador`
   e `periodo`; UTF-8 com `ensure_ascii=False`.
