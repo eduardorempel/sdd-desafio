@@ -56,7 +56,7 @@
 
 ## Fase 2 — Entrada (RN-013)
 
-- [ ] **T-005** — Parse do JSON em `entrada.py` com números lidos como `Decimal`.
+- [x] **T-005** — Parse do JSON em `entrada.py` com números lidos como `Decimal`.
   JSON ilegível, `NaN` e `Infinity` levantam `EntradaInvalida`.
   - **Atende:** RN-013 (erro geral: documento ilegível), DT-001, DT-003
   - **Aceite:** documento não JSON, com `NaN` ou com `Infinity` → `EntradaInvalida`;
