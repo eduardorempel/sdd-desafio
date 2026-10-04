@@ -237,7 +237,7 @@
   - **Teste:** `tests/test_secao7_casos_de_borda.py`
   - **Commit:**
 
-- [ ] **T-023** — Invariantes: determinismo e descrição informativa
+- [x] **T-023** — Invariantes: determinismo e descrição informativa
   (`test(T-023)`).
   - **Atende:** RN-014, spec §9, AMB-006, AMB-008, AMB-010
   - **Aceite:** duas execuções produzem saídas idênticas byte a byte; trocar todas

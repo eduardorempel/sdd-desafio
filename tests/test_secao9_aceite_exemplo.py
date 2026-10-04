@@ -1,5 +1,7 @@
 import json
 import re
+import subprocess
+import sys
 from decimal import Decimal
 from pathlib import Path
 
@@ -89,3 +91,22 @@ def test_justificativas_exemplo_secao4(saida, id_):
 def test_todo_item_cita_rn(saida):
     for item in saida["itens"]:
         assert re.search(r"RN-\d{3}", item["justificativa"]), item["id"]
+
+
+def _rodar_cli(saida_path):
+    return subprocess.run(
+        [sys.executable, "-m", "reembolso", "calcular", "--input", EXEMPLO, "--output", saida_path],
+        capture_output=True,
+        cwd=EXEMPLO.parent.parent,
+        check=True,
+    )
+
+
+def test_determinismo(tmp_path):
+    texto = EXEMPLO.read_text(encoding="utf-8")
+    assert _processar(texto) == _processar(texto)
+    # Processos separados: nenhuma ordem depende de hash ou estado do processo.
+    primeira, segunda = tmp_path / "1.json", tmp_path / "2.json"
+    _rodar_cli(primeira)
+    _rodar_cli(segunda)
+    assert primeira.read_bytes() == segunda.read_bytes()
