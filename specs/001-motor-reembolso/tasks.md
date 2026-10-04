@@ -131,7 +131,7 @@
   - **Teste:** `tests/test_rn004_periodo.py`
   - **Commit:**
 
-- [ ] **T-012** — Etapa de categoria + `CATEGORIAS_REEMBOLSAVEIS` em `politica.py`.
+- [x] **T-012** — Etapa de categoria + `CATEGORIAS_REEMBOLSAVEIS` em `politica.py`.
   - **Atende:** RN-001, AMB-014
   - **Aceite:** d-005 (`coworking`) → recusado, 0,00, `CATEGORIA_NAO_REEMBOLSAVEL`;
     `ALIMENTACAO` → aceita.

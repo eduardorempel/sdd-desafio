@@ -24,6 +24,10 @@ def fora_do_periodo(data: date, inicio: date, fim: date) -> str:
     return f"Data {data} fora do período de {inicio} a {fim} (RN-004)."
 
 
+def categoria_nao_reembolsavel(categoria: str) -> str:
+    return f"Categoria '{categoria}' não é reembolsável pela política (RN-001)."
+
+
 def aprovado() -> str:
     return (
         "Despesa aprovada: passou por todas as regras e é reembolsada integralmente "

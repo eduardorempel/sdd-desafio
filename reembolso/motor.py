@@ -43,6 +43,7 @@ Etapa = PorItem | EmGrupo
 ETAPAS: list[Etapa] = [
     PorItem(regras.valor_negativo),  # RN-005 → VALOR_NEGATIVO
     PorItem(regras.periodo),  # RN-004 → FORA_DO_PERIODO
+    PorItem(regras.categoria),  # RN-001 → CATEGORIA_NAO_REEMBOLSAVEL
 ]
 
 

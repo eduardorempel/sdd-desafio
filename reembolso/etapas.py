@@ -1,6 +1,6 @@
 """Uma função por etapa da seção 8 da spec (etapas 3 a 8)."""
 
-from reembolso import justificativas
+from reembolso import justificativas, politica
 from reembolso.modelo import Despesa, Documento, Motivo, Recusa
 
 
@@ -20,4 +20,14 @@ def periodo(despesa: Despesa, documento: Documento) -> Recusa | None:
     return Recusa(
         Motivo.FORA_DO_PERIODO,
         justificativas.fora_do_periodo(despesa.data, documento.inicio, documento.fim),
+    )
+
+
+def categoria(despesa: Despesa, _documento: Documento) -> Recusa | None:
+    """RN-001: só categorias da lista fechada, comparadas após normalização (RN-002)."""
+    if despesa.categoria in politica.CATEGORIAS_REEMBOLSAVEIS:
+        return None
+    return Recusa(
+        Motivo.CATEGORIA_NAO_REEMBOLSAVEL,
+        justificativas.categoria_nao_reembolsavel(despesa.categoria),
     )
