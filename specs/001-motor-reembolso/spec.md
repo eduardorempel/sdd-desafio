@@ -1,6 +1,6 @@
 # Spec — Motor de Cálculo de Reembolso
 
-**Versão:** 1.0 · **Status:** rascunho · **Última alteração:** 2026-10-04
+**Versão:** 1.1 · **Status:** rascunho · **Última alteração:** 2026-10-04
 
 > **Regra de ouro deste arquivo:** ele descreve o QUÊ e o PORQUÊ. Nenhuma linha
 > aqui pode citar linguagem, biblioteca, classe, função ou estrutura de pasta.
@@ -61,6 +61,9 @@ decisão com base em regras escritas nesta spec.
 A **posição** de uma despesa é a sua ordem na lista `despesas`, começando em 1.
 Ela é usada como critério de desempate (RN-006 e RN-009).
 
+Campos marcados como informativos e campos que não constam desta tabela não são
+validados e nunca participam de cálculo ou decisão (RN-013).
+
 **Saída:** um documento com a seguinte estrutura.
 
 | Campo | Tipo | Significado |
@@ -68,12 +71,12 @@ Ela é usada como critério de desempate (RN-006 e RN-009).
 | `colaborador` | objeto | Cópia do objeto `colaborador` da entrada |
 | `periodo` | objeto | Cópia do objeto `periodo` da entrada |
 | `itens` | lista | Um item para cada despesa da entrada, na mesma ordem |
-| `itens[].id` | texto | `id` da despesa |
-| `itens[].valor_informado` | número | `valor` exatamente como veio na entrada; vazio se ausente ou inválido |
-| `itens[].valor_considerado` | número | Valor arredondado para centavos (RN-003); vazio se inválido |
+| `itens[].id` | texto ou nulo | `id` da despesa; nulo se ausente, vazio ou com tipo inválido |
+| `itens[].valor_informado` | número ou nulo | Valor numérico de `valor` na entrada, sem arredondamento; nulo se ausente ou não numérico. Só o valor importa, não a grafia: `72.5` e `72.50` são o mesmo valor |
+| `itens[].valor_considerado` | número ou nulo | Valor arredondado para centavos (RN-003); nulo sempre que o motivo for `DADOS_INVALIDOS` |
 | `itens[].valor_reembolsavel` | número | Valor a reembolsar, com duas casas decimais |
 | `itens[].status` | texto | `aprovado`, `limitado` ou `recusado` (definições abaixo) |
-| `itens[].motivo` | texto ou vazio | Código do motivo (tabela abaixo); vazio quando `aprovado` |
+| `itens[].motivo` | texto ou nulo | Código do motivo (tabela abaixo); nulo quando `aprovado` |
 | `itens[].justificativa` | texto | Explicação legível da decisão, citando a regra (RN-xxx) |
 | `total_reembolsavel` | número | Soma de `valor_reembolsavel` de todos os itens |
 
@@ -152,7 +155,9 @@ como `alimentacao`. Fornecedores `Bistro Central` e `bistro central` são iguais
 **Regra:** O valor de cada despesa é arredondado para centavos antes de qualquer
 outra regra, com arredondamento comercial: a metade se afasta do zero (0,005
 vira 0,01). Todas as regras seguintes usam o valor arredondado
-(`valor_considerado`). Todos os valores de saída têm duas casas decimais.
+(`valor_considerado`). Na saída, `valor_considerado`, `valor_reembolsavel` e
+`total_reembolsavel` têm duas casas decimais; `valor_informado` não é
+arredondado e mantém as casas que tinha na entrada.
 **Origem:** decisão desta spec (AMB-012)
 **Aceite:** d-011 (33,333) → `valor_considerado` 33,33. Valor 10,005 → 10,01.
 Valor −0,004 → 0,00, tratado como valor zero (RN-005).
@@ -257,19 +262,43 @@ distinção entre dias úteis, fins de semana e feriados.
 
 **Regra:**
 
-- **Erro geral:** se o documento de entrada não puder ser lido, ou se faltar
-  `colaborador.id`, `periodo.inicio`, `periodo.fim` ou `despesas`, ou se
-  `periodo.inicio` for posterior a `periodo.fim`, o sistema encerra com mensagem
-  de erro e não gera saída.
-- **Erro em uma despesa:** se faltar um campo obrigatório da despesa, se a data
-  não for uma data válida, se o valor não for numérico ou se `tem_nota_fiscal`
-  não for verdadeiro/falso, apenas essa despesa é recusada com `DADOS_INVALIDOS`.
-  As demais são processadas normalmente.
+Um campo de texto é considerado **vazio** quando não tem nenhum caractere ou só
+tem espaços. Uma data é **válida** quando está exatamente no formato
+`AAAA-MM-DD` e existe no calendário (2026-02-30 não é válida).
 
-**Origem:** decisão desta spec
+- **Erro geral:** o sistema encerra com mensagem de erro e não gera saída quando:
+  - o documento de entrada não pode ser lido, o que inclui documento que não
+    segue o formato JSON, como `NaN` ou `Infinity` em qualquer campo;
+  - `colaborador` ou `periodo` estão ausentes ou não são objeto;
+  - `colaborador.id` está ausente, vazio ou não é texto;
+  - `periodo.inicio` ou `periodo.fim` estão ausentes ou não são data válida;
+  - `periodo.inicio` é posterior a `periodo.fim`;
+  - `despesas` está ausente ou não é lista;
+  - algum item de `despesas` não é objeto.
+- **Erro em uma despesa:** apenas essa despesa é recusada com `DADOS_INVALIDOS`,
+  e as demais são processadas normalmente, quando:
+  - falta um campo obrigatório da despesa, ou um campo obrigatório de texto
+    está vazio;
+  - `id`, `categoria` ou `fornecedor` não são texto;
+  - `data` não é data válida;
+  - `valor` não é numérico;
+  - `tem_nota_fiscal` não é verdadeiro/falso.
+
+  Na saída, a despesa recusada por `DADOS_INVALIDOS` tem `valor_considerado`
+  nulo, e também `id` nulo quando o problema está no `id`.
+- **Campos informativos e desconhecidos:** `colaborador.nome`,
+  `colaborador.centro_custo`, `periodo.competencia` e `despesas[].descricao`,
+  além de qualquer campo que não conste da tabela de entrada, não são validados
+  e nunca participam de cálculo ou decisão. Tipo ou formato errado nesses campos
+  não gera erro.
+
+**Origem:** decisão desta spec (AMB-017)
 **Aceite:** despesa sem `tem_nota_fiscal` → recusado, `DADOS_INVALIDOS`, e as
 outras despesas do documento aparecem na saída normalmente. Documento sem
-`periodo.fim` → erro, sem arquivo de saída.
+`periodo.fim` → erro, sem arquivo de saída. Despesa com `fornecedor` igual a
+`"   "` → recusado, `DADOS_INVALIDOS`. Despesa com `id` numérico → recusado,
+`DADOS_INVALIDOS`, `itens[].id` nulo. `periodo.inicio` igual a `2026-02-30` →
+erro, sem arquivo de saída. Despesa com `"moeda": "USD"` → campo ignorado.
 
 ### RN-014 — Descrição é informativa
 
@@ -451,6 +480,22 @@ muda o resultado (por exemplo, d-006/d-007 e d-004).
 válida.
 **Regra afetada:** todas
 
+### AMB-017 — Entrada malformada e campos inesperados
+
+**Texto original do RH:** a política não menciona o caso.
+**O que não está claro:** o que fazer com campo vazio ou de tipo errado, data
+fora do formato, valor que não é número, item da lista que não é despesa, campo
+informativo malformado e campo que a entrada não prevê; e quais desses casos
+invalidam o documento inteiro ou só uma despesa.
+**Decisão:** problemas na identificação do colaborador, no período, na lista de
+despesas ou no formato do documento invalidam o documento inteiro; problemas em
+campos obrigatórios de uma despesa recusam só essa despesa; campos informativos
+e desconhecidos são ignorados. Detalhes na RN-013.
+**Justificativa:** sem colaborador, período ou lista não há o que calcular; uma
+despesa ruim não deve impedir o cálculo das outras; e campos que não entram em
+cálculo não têm motivo para recusar nada.
+**Regra afetada:** RN-013
+
 ---
 
 ## 7. Casos de borda
@@ -480,7 +525,19 @@ válida.
 | Despesa em fim de semana | d-012: sábado | sem restrição; 47,20 | RN-012 |
 | Indício de viagem na descrição | d-003: "Corrida aeroporto" | limite normal de 80,00 | RN-011, RN-014 |
 | Campo obrigatório ausente em uma despesa | despesa sem `tem_nota_fiscal` | recusado, `DADOS_INVALIDOS`; demais processadas | RN-013 |
+| Campo obrigatório só com espaços | `fornecedor`: `"   "` | recusado, `DADOS_INVALIDOS`; `valor_considerado` nulo | RN-013 |
+| `id` com tipo errado | `id`: 17 | recusado, `DADOS_INVALIDOS`; `id` e `valor_considerado` nulos | RN-013 |
+| Data fora do formato | `data`: `2026-7-3` | recusado, `DADOS_INVALIDOS` | RN-013 |
+| Data inexistente | `data`: `2026-02-30` | recusado, `DADOS_INVALIDOS` | RN-013 |
+| Valor não numérico | `valor`: `"72.50"` | recusado, `DADOS_INVALIDOS`; `valor_informado` e `valor_considerado` nulos | RN-013 |
+| Valor válido e outro campo inválido | `valor`: 50,00, sem `tem_nota_fiscal` | recusado, `DADOS_INVALIDOS`; `valor_informado` 50,00, `valor_considerado` nulo | RN-013 |
+| Campo desconhecido | despesa com `"moeda": "USD"` | campo ignorado; despesa processada normalmente | RN-013 |
+| Campo informativo malformado | `descricao`: 123 ou `periodo.competencia`: `"julho"` | campo ignorado; sem erro | RN-013, RN-014 |
 | Período ausente | documento sem `periodo.fim` | erro, sem saída | RN-013 |
+| Data do período inválida | `periodo.inicio`: `2026-02-30` | erro, sem saída | RN-013 |
+| Colaborador sem identificação | `colaborador.id`: `"  "` ou 417 | erro, sem saída | RN-013 |
+| Lista de despesas malformada | `despesas` não é lista, ou um item não é objeto | erro, sem saída | RN-013 |
+| Documento com `NaN` ou `Infinity` | `valor`: `NaN` | erro, sem saída | RN-013 |
 | Lista de despesas vazia | `despesas: []` | saída com `itens` vazio e total 0,00 | RN-013 |
 
 ## 8. Ordem de aplicação das regras
@@ -515,13 +572,13 @@ O sistema está pronto quando:
   | d-003 | 80,00 | limitado | `LIMITE_DIARIO` |
   | d-004 | 0,00 | recusado | `NOTA_FISCAL_AUSENTE` |
   | d-005 | 0,00 | recusado | `CATEGORIA_NAO_REEMBOLSAVEL` |
-  | d-006 | 54,90 | aprovado | — |
+  | d-006 | 54,90 | aprovado | nulo |
   | d-007 | 0,00 | recusado | `DUPLICATA` |
   | d-008 | 0,00 | recusado | `FORA_DO_PERIODO` |
   | d-009 | 0,00 | recusado | `VALOR_NEGATIVO` |
   | d-010 | 250,00 | limitado | `LIMITE_DIARIO` |
-  | d-011 | 33,33 | aprovado | — |
-  | d-012 | 47,20 | aprovado | — |
+  | d-011 | 33,33 | aprovado | nulo |
+  | d-012 | 47,20 | aprovado | nulo |
   | d-013 | 0,00 | recusado | `NOTA_FISCAL_AUSENTE` |
   | d-014 | 60,00 | limitado | `LIMITE_DIARIO` |
   | **total_reembolsavel** | **585,43** | | |
