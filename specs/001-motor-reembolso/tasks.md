@@ -103,7 +103,7 @@
 
 ## Fase 3 — Regras de negócio
 
-- [ ] **T-009** — `motor.py`: lista `ETAPAS` (inicialmente vazia), tipos `PorItem`
+- [x] **T-009** — `motor.py`: lista `ETAPAS` (inicialmente vazia), tipos `PorItem`
   e `EmGrupo`, lista de despesas vivas e status final (`aprovado` se
   `valor_reembolsavel == valor_considerado`, senão `limitado`). Uma `Invalida`
   vira `Resultado` recusado com `DADOS_INVALIDOS`. Cria `justificativas.py` com a

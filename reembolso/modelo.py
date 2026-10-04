@@ -68,3 +68,20 @@ class Resultado:
     status: Status
     motivo: Motivo | None
     justificativa: str
+
+
+@dataclass(frozen=True)
+class Recusa:
+    """Decisão de uma etapa que recusa a despesa (spec §8)."""
+
+    motivo: Motivo
+    justificativa: str
+
+
+@dataclass(frozen=True)
+class Corte:
+    """Decisão de uma etapa em grupo que reduz o valor reembolsável (spec §8, etapa 8)."""
+
+    valor_reembolsavel: Decimal
+    motivo: Motivo
+    justificativa: str
