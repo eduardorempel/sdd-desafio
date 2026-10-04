@@ -246,7 +246,7 @@
     `tests/test_secao9_aceite_exemplo.py::test_determinismo`
   - **Commit:**
 
-- [ ] **T-024** — Teste de rastreabilidade: lê a `spec.md`, extrai os `RN-\d{3}` e
+- [x] **T-024** — Teste de rastreabilidade: lê a `spec.md`, extrai os `RN-\d{3}` e
   falha se algum não tiver arquivo `test_rnNNN_*.py`. Fica por último porque só
   passa quando todas as RN têm teste.
   - **Atende:** plan §6
