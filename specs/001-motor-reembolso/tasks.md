@@ -175,7 +175,7 @@
   - **Teste:** `tests/test_rn009_distribuicao.py::test_rn009_justificativa_cita_despesa_que_consumiu`
   - **Commit:**
 
-- [ ] **T-017** — Testes das regras que determinam o que **não** fazer: viagem e
+- [x] **T-017** — Testes das regras que determinam o que **não** fazer: viagem e
   dias do calendário (`test(T-017)`).
   - **Atende:** RN-011, RN-012, AMB-006, AMB-007, AMB-015
   - **Aceite:** d-003 ("Corrida aeroporto", 100,00) → limite de 80,00, 80,00;
