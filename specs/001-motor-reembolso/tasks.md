@@ -115,7 +115,7 @@
     `::test_secao8_invalida_vira_dados_invalidos`, `::test_secao8_resultado_na_ordem_da_entrada`
   - **Commit:**
 
-- [ ] **T-010** — Etapa de valor negativo.
+- [x] **T-010** — Etapa de valor negativo.
   - **Atende:** RN-005, AMB-011
   - **Aceite:** d-009 (−45,00) → recusado, 0,00, `VALOR_NEGATIVO`; 0,00 → aprovado,
     0,00; −0,004 → aprovado, 0,00.

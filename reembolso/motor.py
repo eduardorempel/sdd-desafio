@@ -4,6 +4,7 @@ from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from decimal import Decimal
 
+from reembolso import etapas as regras
 from reembolso import justificativas
 from reembolso.modelo import (
     Corte,
@@ -39,7 +40,9 @@ class EmGrupo:
 Etapa = PorItem | EmGrupo
 
 # Ordem das etapas 3 a 8 da spec §8. As etapas 1 e 2 acontecem em entrada.py.
-ETAPAS: list[Etapa] = []
+ETAPAS: list[Etapa] = [
+    PorItem(regras.valor_negativo),  # RN-005 → VALOR_NEGATIVO
+]
 
 
 def _decisoes(etapa: Etapa, vivas: list[Despesa], documento: Documento) -> dict:

@@ -13,6 +13,12 @@ def dados_invalidos(detalhe: str) -> str:
     return f"Dados inválidos: {detalhe} (RN-013)."
 
 
+def valor_negativo(valor: Decimal) -> str:
+    return (
+        f"Valor negativo ({reais(valor)}) não é reembolsável e não abate outras despesas (RN-005)."
+    )
+
+
 def aprovado() -> str:
     return (
         "Despesa aprovada: passou por todas as regras e é reembolsada integralmente "
