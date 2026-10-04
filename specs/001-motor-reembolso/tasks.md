@@ -38,7 +38,7 @@
     `::test_status_iguais_aos_textos_da_spec`
   - **Commit:**
 
-- [ ] **T-003** — Normalização de texto em `normalizacao.py`: remove espaços das
+- [x] **T-003** — Normalização de texto em `normalizacao.py`: remove espaços das
   pontas, passa para minúsculas e remove acentos. Mantém espaços internos.
   - **Atende:** RN-002, AMB-013, DT-007
   - **Aceite:** `ALIMENTACAO`, ` Alimentação ` e `alimentacao` → `alimentacao`;
