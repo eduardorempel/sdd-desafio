@@ -91,7 +91,7 @@
   - **Teste:** `tests/test_rn013_dados_invalidos.py::test_rn013_despesa_*`
   - **Commit:**
 
-- [ ] **T-008** — Montagem da `Despesa` válida: posição (a partir de 1), categoria
+- [x] **T-008** — Montagem da `Despesa` válida: posição (a partir de 1), categoria
   e fornecedor normalizados, `valor_informado` sem arredondamento e
   `valor_considerado` arredondado.
   - **Atende:** RN-002, RN-003, spec §4 (posição)

@@ -6,7 +6,8 @@ from dataclasses import dataclass
 from datetime import date
 from decimal import Decimal
 
-from reembolso.modelo import Invalida
+from reembolso.modelo import Despesa, Documento, Invalida
+from reembolso.normalizacao import arredondar, normalizar_texto
 
 _FORMATO_DATA = re.compile(r"[0-9]{4}-[0-9]{2}-[0-9]{2}")
 
@@ -147,4 +148,36 @@ def validar_despesa(item: dict, posicao: int) -> Invalida | None:
         id=item["id"] if _problema_texto(item, "id") is None else None,
         valor_informado=_numero(item.get("valor")),
         detalhe="; ".join(problemas),
+    )
+
+
+def ler_despesa(item: dict, posicao: int) -> Despesa | Invalida:
+    """Etapas 1 e 2 da spec §8: valida (RN-013), normaliza (RN-002) e arredonda (RN-003)."""
+    invalida = validar_despesa(item, posicao)
+    if invalida is not None:
+        return invalida
+    valor_informado = _numero(item["valor"])
+    return Despesa(
+        posicao=posicao,
+        id=item["id"],
+        data=data_valida(item["data"]),
+        categoria=normalizar_texto(item["categoria"]),
+        fornecedor=normalizar_texto(item["fornecedor"]),
+        tem_nota_fiscal=item["tem_nota_fiscal"],
+        valor_informado=valor_informado,
+        valor_considerado=arredondar(valor_informado),
+    )
+
+
+def ler_documento(texto: str) -> Documento:
+    """Texto JSON → `Documento`. Levanta `EntradaInvalida` nos casos de erro geral (RN-013)."""
+    cabecalho = validar_documento(ler_json(texto))
+    return Documento(
+        colaborador=cabecalho.colaborador,
+        periodo=cabecalho.periodo,
+        inicio=cabecalho.inicio,
+        fim=cabecalho.fim,
+        despesas=[
+            ler_despesa(item, posicao) for posicao, item in enumerate(cabecalho.itens, start=1)
+        ],
     )

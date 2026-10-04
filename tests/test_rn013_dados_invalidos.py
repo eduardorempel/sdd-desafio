@@ -1,10 +1,18 @@
+import json
 from datetime import date
 from decimal import Decimal
 
 import pytest
 
-from reembolso.entrada import EntradaInvalida, ler_json, validar_despesa, validar_documento
-from reembolso.modelo import Invalida
+from reembolso.entrada import (
+    EntradaInvalida,
+    ler_despesa,
+    ler_documento,
+    ler_json,
+    validar_despesa,
+    validar_documento,
+)
+from reembolso.modelo import Despesa, Invalida
 
 
 def test_rn013_json_invalido_erro_geral():
@@ -237,3 +245,51 @@ def test_rn013_despesa_sem_descricao_e_valida():
 @pytest.mark.parametrize("valor", [Decimal("-45.00"), 0, 100], ids=["negativo", "zero", "inteiro"])
 def test_rn013_despesa_com_valor_numerico_e_valida(valor):
     assert validar_despesa(_despesa(valor=valor), posicao=1) is None
+
+
+def test_rn013_despesa_valida_normalizada_e_arredondada():
+    item = _despesa(
+        id="d-011",
+        categoria=" Alimentação ",
+        fornecedor=" Hotel Copa Sul ",
+        valor=Decimal("33.333"),
+    )
+    assert ler_despesa(item, posicao=2) == Despesa(
+        posicao=2,
+        id="d-011",
+        data=date(2026, 7, 3),
+        categoria="alimentacao",
+        fornecedor="hotel copa sul",
+        tem_nota_fiscal=True,
+        valor_informado=Decimal("33.333"),
+        valor_considerado=Decimal("33.33"),
+    )
+
+
+def test_rn013_despesa_valida_com_valor_inteiro():
+    despesa = ler_despesa(_despesa(valor=100), posicao=1)
+    assert despesa.valor_informado == Decimal("100")
+    assert despesa.valor_considerado == Decimal("100.00")
+
+
+def test_rn013_despesa_invalida_nao_impede_as_demais():
+    doc = _documento(
+        despesas=[
+            _despesa(id="d-001", valor=50),
+            _despesa(id="d-002", valor=50, tem_nota_fiscal=_REMOVER),
+            _despesa(id="d-003", valor=50),
+        ]
+    )
+    texto = json.dumps(doc)
+    despesas = ler_documento(texto).despesas
+    assert [type(d) for d in despesas] == [Despesa, Invalida, Despesa]
+    assert [d.posicao for d in despesas] == [1, 2, 3]
+    assert [d.id for d in despesas] == ["d-001", "d-002", "d-003"]
+
+
+def test_rn013_documento_lido_do_texto():
+    doc = ler_documento(json.dumps(_documento()))
+    assert doc.inicio == date(2026, 7, 1)
+    assert doc.fim == date(2026, 7, 31)
+    assert doc.colaborador["id"] == "c-0417"
+    assert doc.despesas == []
