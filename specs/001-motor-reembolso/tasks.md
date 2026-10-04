@@ -46,7 +46,7 @@
   - **Teste:** `tests/test_rn002_normalizacao.py`
   - **Commit:**
 
-- [ ] **T-004** — Arredondamento para centavos com a metade se afastando do zero
+- [x] **T-004** — Arredondamento para centavos com a metade se afastando do zero
   em `normalizacao.py`. `-0.00` vira `0.00`.
   - **Atende:** RN-003, AMB-012, DT-001
   - **Aceite:** 33,333 → 33,33; 10,005 → 10,01; −10,005 → −10,01; −0,004 → 0,00,
