@@ -198,7 +198,7 @@
   - **Teste:** `tests/test_saida_serializacao.py`
   - **Commit:**
 
-- [ ] **T-019** — CLI `calcular --input --output`: em erro geral, mensagem em
+- [x] **T-019** — CLI `calcular --input --output`: em erro geral, mensagem em
   stderr, código 1 e arquivo de saída não criado nem sobrescrito; sucesso retorna
   0; argumentos inválidos retornam 2.
   - **Atende:** RN-013 (erro geral, "não gera saída"), DT-006
