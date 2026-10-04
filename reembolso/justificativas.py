@@ -45,11 +45,33 @@ def nota_fiscal_ausente(limiar: Decimal) -> str:
     return f"Valor acima de {reais(limiar)} sem nota fiscal (RN-007)."
 
 
-def limite_diario(categoria: str, limite: Decimal, excedente: Decimal) -> str:
+def _enumerar(ids: list[str]) -> str:
+    if len(ids) == 1:
+        return ids[0]
+    return f"{', '.join(ids[:-1])} e {ids[-1]}"
+
+
+def limite_diario(
+    categoria: str,
+    limite: Decimal,
+    data: date,
+    consumido: Decimal,
+    consumidoras: list[str],
+    excedente: Decimal,
+) -> str:
+    """Cita o limite e, se houver, o valor já consumido no dia e quem o consumiu (spec §4)."""
     nome = _NOMES_CATEGORIA.get(categoria, categoria)
+    if not consumidoras:
+        return (
+            f"Limite diário de {nome} de {reais(limite)} aplicado; "
+            f"excedente de {reais(excedente)} cortado (RN-008, RN-010)."
+        )
+    por = f"por {_enumerar(consumidoras)} em {data}"
+    if consumido >= limite:
+        return f"Limite diário de {nome} de {reais(limite)} já consumido {por} (RN-008, RN-009)."
     return (
-        f"Limite diário de {nome} de {reais(limite)} aplicado; "
-        f"excedente de {reais(excedente)} cortado (RN-008, RN-010)."
+        f"Limite diário de {nome} de {reais(limite)}, com {reais(consumido)} já consumido {por}; "
+        f"excedente de {reais(excedente)} cortado (RN-008, RN-009, RN-010)."
     )
 
 

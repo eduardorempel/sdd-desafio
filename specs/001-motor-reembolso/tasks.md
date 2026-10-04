@@ -168,7 +168,7 @@
     `tests/test_rn010_parcial.py`
   - **Commit:**
 
-- [ ] **T-016** — Justificativa de `LIMITE_DIARIO` com o limite, o valor já
+- [x] **T-016** — Justificativa de `LIMITE_DIARIO` com o limite, o valor já
   consumido no dia e os `id` das despesas que o consumiram.
   - **Atende:** spec §4 (justificativa), RN-009
   - **Aceite:** a justificativa de d-002 cita R$ 60,00, d-001 e RN-009.

@@ -75,20 +75,28 @@ def limites_por_data(vivas: list[Despesa], _documento: Documento) -> dict[int, C
     Cada despesa recebe o menor valor entre o seu valor considerado e o saldo deixado
     pelas anteriores; o excedente é cortado. `vivas` chega em ordem de posição.
     """
-    saldos: dict[tuple, Decimal] = {}
+    consumos: dict[tuple, Decimal] = defaultdict(Decimal)
+    consumidoras: dict[tuple, list[str]] = defaultdict(list)
     cortes: dict[int, Corte] = {}
     for despesa in vivas:
         limite = politica.LIMITE_POR_DATA[despesa.categoria]
         chave = (despesa.data, despesa.categoria)
-        saldo = saldos.get(chave, limite)
-        reembolsavel = min(despesa.valor_considerado, saldo)
-        saldos[chave] = saldo - reembolsavel
+        consumido = consumos[chave]
+        reembolsavel = min(despesa.valor_considerado, limite - consumido)
         if reembolsavel < despesa.valor_considerado:
             cortes[despesa.posicao] = Corte(
                 reembolsavel,
                 Motivo.LIMITE_DIARIO,
                 justificativas.limite_diario(
-                    despesa.categoria, limite, despesa.valor_considerado - reembolsavel
+                    despesa.categoria,
+                    limite,
+                    despesa.data,
+                    consumido,
+                    list(consumidoras[chave]),
+                    despesa.valor_considerado - reembolsavel,
                 ),
             )
+        if reembolsavel > 0:
+            consumos[chave] = consumido + reembolsavel
+            consumidoras[chave].append(despesa.id)
     return cortes
