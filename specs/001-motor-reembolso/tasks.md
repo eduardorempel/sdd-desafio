@@ -257,7 +257,7 @@
 
 ## Fase 6 — Finalização
 
-- [ ] **T-025** — README: requisitos, instalação, como rodar a CLI e como rodar os
+- [x] **T-025** — README: requisitos, instalação, como rodar a CLI e como rodar os
   testes e o lint (`docs(T-025)`).
   - **Atende:** DESAFIO (entrega), RUBRICA §5
   - **Aceite:** num clone limpo, seguir o README gera `resultado.json` a partir do

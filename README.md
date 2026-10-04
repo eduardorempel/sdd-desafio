@@ -1,101 +1,91 @@
-# Desafio Prático — Spec Driven Development
+# Motor de Cálculo de Reembolso
 
-Aula bônus de SDD, fechando a trilha:
+CLI que lê um JSON com as despesas de um colaborador em um período e gera um
+JSON com o valor reembolsável, o status e a justificativa de cada despesa,
+seguindo as regras da spec.
 
-`AI Fluency` → `Claude 101` → `Claude Code 101` → `Building with the Claude API` → `Claude Code in Action` → `Módulo SDD` → **Desafio**
+Este repositório é a entrega do desafio de Spec Driven Development
+(enunciado em [`DESAFIO.md`](DESAFIO.md)).
 
-**Individual · 2 dias · Claude Code**
+| Documento | Conteúdo |
+|---|---|
+| [`specs/001-motor-reembolso/spec.md`](specs/001-motor-reembolso/spec.md) | O quê: regras de negócio (RN-001 a RN-014), ambiguidades, casos de borda, aceite |
+| [`specs/001-motor-reembolso/plan.md`](specs/001-motor-reembolso/plan.md) | O como: stack, arquitetura, decisões técnicas |
+| [`specs/001-motor-reembolso/tasks.md`](specs/001-motor-reembolso/tasks.md) | Em que ordem: tasks T-001 a T-025, cada uma com o seu commit |
+| [`specs/001-motor-reembolso/DECISIONS.md`](specs/001-motor-reembolso/DECISIONS.md) | Log de mudanças da spec |
 
----
+## Requisitos
 
-## Comece por aqui
+- Python 3.12 ou mais recente
+- Nenhuma dependência para rodar; `pytest` e `ruff` para desenvolvimento
 
-1. **[`DESAFIO.md`](DESAFIO.md)** — o enunciado. Leia inteiro antes de escrever qualquer coisa.
-2. **[`RUBRICA.md`](RUBRICA.md)** — como você é avaliado. É pública de propósito; leia antes de começar.
-3. **[`exemplos/despesas-exemplo.json`](exemplos/despesas-exemplo.json)** — a entrada de referência. Não é decoração: percorra item por item antes de escrever a spec.
-4. **[`FAQ.md`](FAQ.md)** — travou? Comece por aqui. **O instrutor está fora durante o desafio**, então o FAQ é o canal de suporte.
-
----
-
-## Como participar
-
-**1. Faça um fork deste repositório.** Ele precisa ser público, ou você não conseguirá compartilhar depois.
-
-**2. Clone o seu fork e prepare a estrutura de trabalho:**
+## Instalação
 
 ```bash
-git clone https://github.com/<seu-usuario>/sdd-desafio.git
-cd sdd-desafio
-cp template/CLAUDE.md .
-cp -r template/specs .
-cp -r template/docs .
-git add -A && git commit -m "chore: estrutura inicial a partir do template"
+python -m venv .venv
+.venv/bin/python -m pip install -e ".[dev]"        # Linux/macOS
+.venv/Scripts/python -m pip install -e ".[dev]"    # Windows
 ```
 
-<details>
-<summary>PowerShell</summary>
+Os comandos abaixo supõem o ambiente virtual ativado
+(`source .venv/bin/activate` ou `.venv\Scripts\activate`).
 
-```powershell
-git clone https://github.com/<seu-usuario>/sdd-desafio.git
-cd sdd-desafio
-Copy-Item template\CLAUDE.md .
-Copy-Item template\specs . -Recurse
-Copy-Item template\docs . -Recurse
-git add -A; git commit -m "chore: estrutura inicial a partir do template"
-```
-</details>
+## Como rodar
 
-Os arquivos em `template/` são esqueletos com as perguntas que cada documento precisa responder. Deixe a pasta `template/` onde está — ela serve de referência.
-
-**3. Trabalhe no seu fork**, seguindo as três regras do jogo descritas no [`DESAFIO.md`](DESAFIO.md):
-
-- Nenhum commit sem task
-- Explicação no chat que não está na spec é bug de spec
-- Interações exportadas (`/export`) e commitadas em `docs/sessions/`
-
-**4. No Dia 2, às 10h**, você recebe uma mudança de requisito pelo canal da turma. Ela é obrigatória e vale 20 pontos. Chegue nesse momento com o sistema base funcionando e testado.
-
-> Durante os dois dias o instrutor está de férias e não responde mensagens. Dúvida de processo: [`FAQ.md`](FAQ.md). Dúvida sobre o que a política do RH significa não tem resposta — decidir isso é o exercício.
-
-**5. Entregue** enviando o link do seu fork no formulário. Prazo: **Dia 2, 18h**.
-
----
-
-## O que o seu fork precisa conter ao final
-
-```
-seu-fork/
-├── CLAUDE.md                     # convenções do projeto para o agente
-├── README.md                     # como rodar e como testar o SEU projeto
-├── specs/
-│   └── 001-motor-reembolso/
-│       ├── spec.md               # o QUÊ e o PORQUÊ
-│       ├── plan.md               # o COMO
-│       ├── tasks.md              # T-001..T-0NN, com critério de aceite
-│       └── DECISIONS.md          # log de mudanças de spec
-├── src/
-├── tests/
-└── docs/
-    ├── sessions/                 # exports das suas conversas com o Claude
-    └── RELATORIO.md              # o relatório final
+```bash
+python -m reembolso calcular --input exemplos/despesas-exemplo.json --output resultado.json
 ```
 
-Sobre o `README.md`: substitua este arquivo pelo README do **seu** projeto — como rodar, como testar, o que você construiu. Um README que não permite rodar o projeto custa pontos.
+- `--input`: documento de despesas no formato de
+  [`exemplos/despesas-exemplo.json`](exemplos/despesas-exemplo.json) (spec §4).
+- `--output`: arquivo de resultado, em UTF-8. Para o exemplo, o
+  `total_reembolsavel` é `585.43`.
 
----
+Códigos de saída:
 
-## Antes de começar, confirme que o `/export` funciona
+| Código | Situação |
+|---|---|
+| 0 | Sucesso; o arquivo de saída foi gravado |
+| 1 | Erro geral da RN-013 (documento ilegível, sem período válido etc.); mensagem em stderr, e o arquivo de saída não é criado nem sobrescrito |
+| 2 | Argumentos de linha de comando inválidos |
 
-Abra o Claude Code, troque duas mensagens, rode `/export` e confirme que o arquivo foi gerado.
+Uma despesa com dados inválidos não interrompe a execução: ela sai recusada
+com `DADOS_INVALIDOS` e as demais são calculadas normalmente.
 
-Faça isso **agora**, não no Dia 2. Sem `docs/sessions/`, o critério de relatório vale zero — e já aconteceu de gente que fez tudo certo descobrir no último dia que não tinha registro nenhum do trabalho.
+## Como testar
 
-Exporte ao final de **cada** sessão, nomeando `docs/sessions/01-descricao-curta.md`, `02-...`, e assim por diante.
+```bash
+python -m pytest
+```
 
----
+Os testes seguem a spec: um arquivo `tests/test_rnNNN_*.py` por regra de
+negócio, `tests/test_secao7_casos_de_borda.py` com um caso por linha da tabela
+da seção 7, `tests/test_secao9_aceite_exemplo.py` com o aceite do exemplo e
+`tests/test_rastreabilidade.py`, que falha se alguma RN da spec ficar sem
+arquivo de teste.
 
-## O resumo em um parágrafo
+## Lint e formatação
 
-Você vai receber uma política de reembolso escrita por um RH, com a redação ruim que uma política de RH real tem. Ela é ambígua em vários pontos, e você não tem acesso a ninguém para tirar dúvida. O trabalho não é implementar — é **especificar**: encontrar cada ambiguidade, decidir explicitamente, justificar e registrar. O produto funcionando vale **10 dos 100 pontos**. Os outros 90 estão na spec, na rastreabilidade `spec → tasks → commits → testes`, na resposta à mudança de requisito do Dia 2 e no relatório.
+```bash
+ruff check .
+ruff format .
+```
 
-Isso é deliberado. Um projeto que roda perfeitamente com spec fraca tira nota baixa; um projeto com bug conhecido, spec impecável e trilha limpa tira nota alta.
+## Estrutura
+
+```
+reembolso/
+  cli.py             argumentos, leitura e escrita de arquivo, códigos de saída
+  entrada.py         JSON → Documento; validação da RN-013 (etapas 1 e 2)
+  normalizacao.py    normalização de texto (RN-002) e arredondamento (RN-003)
+  politica.py        categorias, limites e limiar da nota fiscal, como dados
+  etapas.py          uma função por etapa da seção 8 da spec
+  motor.py           ordem das etapas (ETAPAS) e execução
+  justificativas.py  textos das justificativas
+  saida.py           Resultado → JSON
+  modelo.py          dataclasses e enums
+tests/
+exemplos/
+specs/001-motor-reembolso/
+docs/sessions/       exports das sessões com o Claude Code
+```
