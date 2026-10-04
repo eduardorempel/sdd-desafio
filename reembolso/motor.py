@@ -45,6 +45,7 @@ ETAPAS: list[Etapa] = [
     PorItem(regras.periodo),  # RN-004 → FORA_DO_PERIODO
     PorItem(regras.categoria),  # RN-001 → CATEGORIA_NAO_REEMBOLSAVEL
     EmGrupo(regras.duplicatas),  # RN-006 → DUPLICATA
+    PorItem(regras.nota_fiscal),  # RN-007 → NOTA_FISCAL_AUSENTE
 ]
 
 

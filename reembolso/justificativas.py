@@ -35,6 +35,10 @@ def duplicata(id_mantida: str) -> str:
     )
 
 
+def nota_fiscal_ausente(limiar: Decimal) -> str:
+    return f"Valor acima de {reais(limiar)} sem nota fiscal (RN-007)."
+
+
 def aprovado() -> str:
     return (
         "Despesa aprovada: passou por todas as regras e é reembolsada integralmente "

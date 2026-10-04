@@ -56,3 +56,13 @@ def duplicatas(vivas: list[Despesa], _documento: Documento) -> dict[int, Recusa]
                     Motivo.DUPLICATA, justificativas.duplicata(mantida.id)
                 )
     return recusas
+
+
+def nota_fiscal(despesa: Despesa, _documento: Documento) -> Recusa | None:
+    """RN-007: valor da própria despesa acima do limiar e sem nota é recusado inteiro."""
+    if despesa.valor_considerado > politica.LIMIAR_NOTA_FISCAL and not despesa.tem_nota_fiscal:
+        return Recusa(
+            Motivo.NOTA_FISCAL_AUSENTE,
+            justificativas.nota_fiscal_ausente(politica.LIMIAR_NOTA_FISCAL),
+        )
+    return None

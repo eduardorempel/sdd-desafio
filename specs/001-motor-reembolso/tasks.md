@@ -149,7 +149,7 @@
   - **Teste:** `tests/test_rn006_duplicatas.py`
   - **Commit:**
 
-- [ ] **T-014** — Etapa de nota fiscal + `LIMIAR_NOTA_FISCAL` em `politica.py`.
+- [x] **T-014** — Etapa de nota fiscal + `LIMIAR_NOTA_FISCAL` em `politica.py`.
   - **Atende:** RN-007, AMB-004, AMB-005
   - **Aceite:** d-003 (100,00, sem nota) → passa; d-004 (100,01, sem nota) e d-013
     (690,00, sem nota) → recusado, 0,00, `NOTA_FISCAL_AUSENTE`; 150,00 com nota →
