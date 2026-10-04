@@ -28,7 +28,7 @@
   - **Atende:** plan §1
   - **Aceite:** `python -m pytest` e `ruff check .` passam.
   - **Teste:** `tests/test_estrutura.py::test_pacote_importa`
-  - **Commit:**
+  - **Commit:** 33ec69e
 
 - [ ] **T-002** — `modelo.py`: dataclasses `Documento`, `Despesa`, `Invalida`,
   `Resultado` e enums `Status` e `Motivo`, com valores iguais aos textos da spec.
