@@ -66,7 +66,7 @@
     `::test_dt001_float_lido_como_decimal`
   - **Commit:**
 
-- [ ] **T-006** — Validação do documento: `colaborador` e `periodo` são objetos,
+- [x] **T-006** — Validação do documento: `colaborador` e `periodo` são objetos,
   `colaborador.id` é texto não vazio, `inicio` e `fim` são datas válidas
   (`AAAA-MM-DD` e existentes no calendário), `inicio ≤ fim`, `despesas` é lista e
   todos os itens são objetos. Campos informativos e desconhecidos não são validados.
