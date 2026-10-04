@@ -34,10 +34,11 @@ Se o que eu pedi não está coberto por nenhuma task, me avise em vez de impleme
 
 ## Stack e comandos
 
-- Linguagem: `<...>`
-- Rodar: `<comando>`
-- Testes: `<comando>`
-- Lint/format: `<comando>`
+- Linguagem: Python 3.12+ (sem dependências de runtime; pytest e ruff como dev)
+- Instalar: `python -m venv .venv` e `.venv/Scripts/python -m pip install -e ".[dev]"`
+- Rodar: `python -m reembolso calcular --input despesas.json --output resultado.json`
+- Testes: `python -m pytest`
+- Lint/format: `ruff check .` · `ruff format .`
 
 ## Convenções de código
 

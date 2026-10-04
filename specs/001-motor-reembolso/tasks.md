@@ -22,7 +22,7 @@
 
 ## Fase 1 — Fundação
 
-- [ ] **T-001** — Esqueleto do projeto: pacote `reembolso`, `pyproject` com pytest
+- [x] **T-001** — Esqueleto do projeto: pacote `reembolso`, `pyproject` com pytest
   e ruff, ponto de entrada `python -m reembolso`. Preenche Stack e comandos no
   `CLAUDE.md`.
   - **Atende:** plan §1
