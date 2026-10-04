@@ -138,7 +138,7 @@
   - **Teste:** `tests/test_rn001_categoria.py`
   - **Commit:**
 
-- [ ] **T-013** — Etapa de duplicatas (mesma data, categoria normalizada,
+- [x] **T-013** — Etapa de duplicatas (mesma data, categoria normalizada,
   fornecedor normalizado e `valor_considerado`). É mantida a de menor posição
   entre as que têm nota; se nenhuma tiver nota, a de menor posição.
   - **Atende:** RN-006, AMB-010

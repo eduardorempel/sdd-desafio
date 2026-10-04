@@ -28,6 +28,13 @@ def categoria_nao_reembolsavel(categoria: str) -> str:
     return f"Categoria '{categoria}' não é reembolsável pela política (RN-001)."
 
 
+def duplicata(id_mantida: str) -> str:
+    return (
+        f"Duplicata de {id_mantida} (mesma data, categoria, fornecedor e valor); "
+        f"mantida {id_mantida} (RN-006)."
+    )
+
+
 def aprovado() -> str:
     return (
         "Despesa aprovada: passou por todas as regras e é reembolsada integralmente "
