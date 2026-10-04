@@ -30,7 +30,7 @@
   - **Teste:** `tests/test_estrutura.py::test_pacote_importa`
   - **Commit:** 33ec69e
 
-- [ ] **T-002** — `modelo.py`: dataclasses `Documento`, `Despesa`, `Invalida`,
+- [x] **T-002** — `modelo.py`: dataclasses `Documento`, `Despesa`, `Invalida`,
   `Resultado` e enums `Status` e `Motivo`, com valores iguais aos textos da spec.
   - **Atende:** spec §4 (status e motivos), plan §3
   - **Aceite:** os sete motivos e os três status têm exatamente os textos da spec.
