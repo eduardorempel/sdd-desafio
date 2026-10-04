@@ -211,7 +211,7 @@
 
 ## Fase 5 — Casos de borda e aceite
 
-- [ ] **T-020** — Aceite completo com `exemplos/despesas-exemplo.json`
+- [x] **T-020** — Aceite completo com `exemplos/despesas-exemplo.json`
   (`test(T-020)`).
   - **Atende:** spec §9
   - **Aceite:** as 14 linhas (`valor_reembolsavel`, `status`, `motivo`) batem com
