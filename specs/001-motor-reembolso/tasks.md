@@ -36,7 +36,7 @@
   - **Aceite:** os sete motivos e os três status têm exatamente os textos da spec.
   - **Teste:** `tests/test_modelo.py::test_motivos_iguais_aos_codigos_da_spec`,
     `::test_status_iguais_aos_textos_da_spec`
-  - **Commit:**
+  - **Commit:** f207780
 
 - [x] **T-003** — Normalização de texto em `normalizacao.py`: remove espaços das
   pontas, passa para minúsculas e remove acentos. Mantém espaços internos.
@@ -44,7 +44,7 @@
   - **Aceite:** `ALIMENTACAO`, ` Alimentação ` e `alimentacao` → `alimentacao`;
     `Bistro Central` = `bistro central`; espaços internos mantidos; `ç` → `c`.
   - **Teste:** `tests/test_rn002_normalizacao.py`
-  - **Commit:**
+  - **Commit:** 1e0e792
 
 - [x] **T-004** — Arredondamento para centavos com a metade se afastando do zero
   em `normalizacao.py`. `-0.00` vira `0.00`.
@@ -52,7 +52,7 @@
   - **Aceite:** 33,333 → 33,33; 10,005 → 10,01; −10,005 → −10,01; −0,004 → 0,00,
     sem sinal.
   - **Teste:** `tests/test_rn003_arredondamento.py`
-  - **Commit:**
+  - **Commit:** 1f7df07
 
 ## Fase 2 — Entrada (RN-013)
 
@@ -64,7 +64,7 @@
   - **Teste:** `tests/test_rn013_dados_invalidos.py::test_rn013_json_invalido_erro_geral`,
     `::test_rn013_nan_erro_geral`, `::test_rn013_infinity_erro_geral`,
     `::test_dt001_float_lido_como_decimal`
-  - **Commit:**
+  - **Commit:** fb3fd8d
 
 - [x] **T-006** — Validação do documento: `colaborador` e `periodo` são objetos,
   `colaborador.id` é texto não vazio, `inicio` e `fim` são datas válidas
@@ -76,7 +76,7 @@
     é lista ou item que não é objeto → `EntradaInvalida`. `periodo.competencia` =
     `"julho"` e `despesas: []` → sem erro.
   - **Teste:** `tests/test_rn013_dados_invalidos.py::test_rn013_erro_geral_*`
-  - **Commit:**
+  - **Commit:** ab4c408
 
 - [x] **T-007** — Validação de cada despesa: falha produz `Invalida` com
   `DADOS_INVALIDOS`. `id` é nulo quando o problema está no `id`; `valor_informado`
@@ -89,7 +89,7 @@
     seguem. `valor` 50,00 com outro campo inválido → `valor_informado` 50,00.
     `"moeda": "USD"` e `descricao: 123` → ignorados.
   - **Teste:** `tests/test_rn013_dados_invalidos.py::test_rn013_despesa_*`
-  - **Commit:**
+  - **Commit:** 0662169
 
 - [x] **T-008** — Montagem da `Despesa` válida: posição (a partir de 1), categoria
   e fornecedor normalizados, `valor_informado` sem arredondamento e
@@ -99,7 +99,7 @@
     `Despesa(posicao=2, categoria="alimentacao", valor_informado=33.333,
     valor_considerado=33.33)`.
   - **Teste:** `tests/test_rn013_dados_invalidos.py::test_rn013_despesa_valida_normalizada_e_arredondada`
-  - **Commit:**
+  - **Commit:** 0420f1f
 
 ## Fase 3 — Regras de negócio
 
@@ -113,14 +113,14 @@
     recusado, 0,00, `valor_considerado` nulo; o resultado sai na ordem das posições.
   - **Teste:** `tests/test_motor.py::test_secao8_recusada_nao_chega_a_etapa_seguinte`,
     `::test_secao8_invalida_vira_dados_invalidos`, `::test_secao8_resultado_na_ordem_da_entrada`
-  - **Commit:**
+  - **Commit:** 12a6a4a
 
 - [x] **T-010** — Etapa de valor negativo.
   - **Atende:** RN-005, AMB-011
   - **Aceite:** d-009 (−45,00) → recusado, 0,00, `VALOR_NEGATIVO`; 0,00 → aprovado,
     0,00; −0,004 → aprovado, 0,00.
   - **Teste:** `tests/test_rn005_valor_negativo.py`
-  - **Commit:**
+  - **Commit:** a9752c2
 
 - [x] **T-011** — Etapa de período, com as bordas incluídas. `competencia` não é
   usada.
@@ -129,14 +129,14 @@
     d-014 (igual a `fim`) → aceitas; `competencia` divergente das datas não muda o
     resultado.
   - **Teste:** `tests/test_rn004_periodo.py`
-  - **Commit:**
+  - **Commit:** 9556082
 
 - [x] **T-012** — Etapa de categoria + `CATEGORIAS_REEMBOLSAVEIS` em `politica.py`.
   - **Atende:** RN-001, AMB-014
   - **Aceite:** d-005 (`coworking`) → recusado, 0,00, `CATEGORIA_NAO_REEMBOLSAVEL`;
     `ALIMENTACAO` → aceita.
   - **Teste:** `tests/test_rn001_categoria.py`
-  - **Commit:**
+  - **Commit:** 619aec1
 
 - [x] **T-013** — Etapa de duplicatas (mesma data, categoria normalizada,
   fornecedor normalizado e `valor_considerado`). É mantida a de menor posição
@@ -147,7 +147,7 @@
     `BISTRO CENTRAL ` → duplicatas; `id` e `descricao` diferentes não impedem a
     duplicata; despesa já recusada em etapa anterior não entra no grupo.
   - **Teste:** `tests/test_rn006_duplicatas.py`
-  - **Commit:**
+  - **Commit:** 713e334
 
 - [x] **T-014** — Etapa de nota fiscal + `LIMIAR_NOTA_FISCAL` em `politica.py`.
   - **Atende:** RN-007, AMB-004, AMB-005
@@ -155,7 +155,7 @@
     (690,00, sem nota) → recusado, 0,00, `NOTA_FISCAL_AUSENTE`; 150,00 com nota →
     passa.
   - **Teste:** `tests/test_rn007_nota_fiscal.py`
-  - **Commit:**
+  - **Commit:** fa72946
 
 - [x] **T-015** — Etapa de limites por data e categoria, com o limite consumido na
   ordem das posições e o excedente cortado + `LIMITE_POR_DATA` em `politica.py`.
@@ -166,14 +166,14 @@
     d-009 não altera o reembolso das outras despesas de transporte.
   - **Teste:** `tests/test_rn008_limites.py`, `tests/test_rn009_distribuicao.py`,
     `tests/test_rn010_parcial.py`
-  - **Commit:**
+  - **Commit:** 7b9463a
 
 - [x] **T-016** — Justificativa de `LIMITE_DIARIO` com o limite, o valor já
   consumido no dia e os `id` das despesas que o consumiram.
   - **Atende:** spec §4 (justificativa), RN-009
   - **Aceite:** a justificativa de d-002 cita R$ 60,00, d-001 e RN-009.
   - **Teste:** `tests/test_rn009_distribuicao.py::test_rn009_justificativa_cita_despesa_que_consumiu`
-  - **Commit:**
+  - **Commit:** 43332ec
 
 - [x] **T-017** — Testes das regras que determinam o que **não** fazer: viagem e
   dias do calendário (`test(T-017)`).
@@ -182,7 +182,7 @@
     nenhuma despesa recebe limite acima da tabela da RN-008; d-012 (sábado,
     47,20) → aprovado, 47,20.
   - **Teste:** `tests/test_rn011_viagem.py`, `tests/test_rn012_calendario.py`
-  - **Commit:**
+  - **Commit:** 5bf6028
 
 ## Fase 4 — Saída e CLI
 
@@ -196,7 +196,7 @@
     `total_reembolsavel` é a soma dos itens; `colaborador` com número é
     serializado sem erro.
   - **Teste:** `tests/test_saida_serializacao.py`
-  - **Commit:**
+  - **Commit:** 9560e22
 
 - [x] **T-019** — CLI `calcular --input --output`: em erro geral, mensagem em
   stderr, código 1 e arquivo de saída não criado nem sobrescrito; sucesso retorna
@@ -207,7 +207,7 @@
     arquivo e retorna 0.
   - **Teste:** `tests/test_cli.py::test_dt006_erro_geral_nao_sobrescreve_saida`,
     `::test_dt006_erro_geral_retorna_1_e_escreve_stderr`, `::test_cli_exemplo_gera_arquivo`
-  - **Commit:**
+  - **Commit:** deb2843
 
 ## Fase 5 — Casos de borda e aceite
 
@@ -218,7 +218,7 @@
     a tabela da §9; `total_reembolsavel` = 585,43; um item por despesa, na mesma
     ordem da entrada.
   - **Teste:** `tests/test_secao9_aceite_exemplo.py`
-  - **Commit:**
+  - **Commit:** 9f0e7b1
 
 - [x] **T-021** — Texto exato das justificativas dos exemplos da §4 e verificação
   de que todo item cita uma RN.
@@ -227,7 +227,7 @@
     item casa com `RN-\d{3}`.
   - **Teste:** `tests/test_secao9_aceite_exemplo.py::test_justificativas_exemplo_secao4`,
     `::test_todo_item_cita_rn`
-  - **Commit:**
+  - **Commit:** a9ec241
 
 - [x] **T-022** — Tabela da §7 como teste parametrizado, com uma linha por caso e
   o nome do caso como `id` (`test(T-022)`).
@@ -235,7 +235,7 @@
   - **Aceite:** os 37 casos da §7 passam e aparecem no relatório do pytest com o
     nome da spec.
   - **Teste:** `tests/test_secao7_casos_de_borda.py`
-  - **Commit:**
+  - **Commit:** f1ca50c
 
 - [x] **T-023** — Invariantes: determinismo e descrição informativa
   (`test(T-023)`).
@@ -244,7 +244,7 @@
     as descrições do exemplo não altera `valor_reembolsavel`, `status` nem `motivo`.
   - **Teste:** `tests/test_rn014_descricao.py`,
     `tests/test_secao9_aceite_exemplo.py::test_determinismo`
-  - **Commit:**
+  - **Commit:** 24e7e64
 
 - [x] **T-024** — Teste de rastreabilidade: lê a `spec.md`, extrai os `RN-\d{3}` e
   falha se algum não tiver arquivo `test_rnNNN_*.py`. Fica por último porque só
@@ -253,7 +253,7 @@
   - **Aceite:** RN-001 a RN-014 têm arquivo de teste; remover um deles faz o teste
     falhar.
   - **Teste:** `tests/test_rastreabilidade.py`
-  - **Commit:**
+  - **Commit:** 6cbdd95
 
 ## Fase 6 — Finalização
 
@@ -264,7 +264,7 @@
     exemplo e `python -m pytest` passa.
   - **Teste:** manual (roteiro do próprio README); `tests/test_cli.py::test_cli_exemplo_gera_arquivo`
     cobre o mesmo comando
-  - **Commit:**
+  - **Commit:** 8bb0338
 
 ---
 
