@@ -3,6 +3,12 @@
 from datetime import date
 from decimal import Decimal
 
+_NOMES_CATEGORIA = {
+    "alimentacao": "alimentação",
+    "transporte_urbano": "transporte urbano",
+    "hospedagem": "hospedagem",
+}
+
 
 def reais(valor: Decimal) -> str:
     """Formata como `R$ 1.234,56`."""
@@ -37,6 +43,14 @@ def duplicata(id_mantida: str) -> str:
 
 def nota_fiscal_ausente(limiar: Decimal) -> str:
     return f"Valor acima de {reais(limiar)} sem nota fiscal (RN-007)."
+
+
+def limite_diario(categoria: str, limite: Decimal, excedente: Decimal) -> str:
+    nome = _NOMES_CATEGORIA.get(categoria, categoria)
+    return (
+        f"Limite diário de {nome} de {reais(limite)} aplicado; "
+        f"excedente de {reais(excedente)} cortado (RN-008, RN-010)."
+    )
 
 
 def aprovado() -> str:

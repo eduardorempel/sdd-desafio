@@ -157,7 +157,7 @@
   - **Teste:** `tests/test_rn007_nota_fiscal.py`
   - **Commit:**
 
-- [ ] **T-015** — Etapa de limites por data e categoria, com o limite consumido na
+- [x] **T-015** — Etapa de limites por data e categoria, com o limite consumido na
   ordem das posições e o excedente cortado + `LIMITE_POR_DATA` em `politica.py`.
   - **Atende:** RN-008, RN-009, RN-010, AMB-001, AMB-002, AMB-003, AMB-008
   - **Aceite:** d-001 + d-002 → 60,00 + 0,00; d-010 (480,00) → 250,00, `limitado`;

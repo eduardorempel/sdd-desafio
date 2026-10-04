@@ -46,6 +46,7 @@ ETAPAS: list[Etapa] = [
     PorItem(regras.categoria),  # RN-001 → CATEGORIA_NAO_REEMBOLSAVEL
     EmGrupo(regras.duplicatas),  # RN-006 → DUPLICATA
     PorItem(regras.nota_fiscal),  # RN-007 → NOTA_FISCAL_AUSENTE
+    EmGrupo(regras.limites_por_data),  # RN-008, RN-009, RN-010 → LIMITE_DIARIO
 ]
 
 

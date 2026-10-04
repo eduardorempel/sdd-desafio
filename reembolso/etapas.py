@@ -1,9 +1,10 @@
 """Uma função por etapa da seção 8 da spec (etapas 3 a 8)."""
 
 from collections import defaultdict
+from decimal import Decimal
 
 from reembolso import justificativas, politica
-from reembolso.modelo import Despesa, Documento, Motivo, Recusa
+from reembolso.modelo import Corte, Despesa, Documento, Motivo, Recusa
 
 
 def valor_negativo(despesa: Despesa, _documento: Documento) -> Recusa | None:
@@ -66,3 +67,28 @@ def nota_fiscal(despesa: Despesa, _documento: Documento) -> Recusa | None:
             justificativas.nota_fiscal_ausente(politica.LIMIAR_NOTA_FISCAL),
         )
     return None
+
+
+def limites_por_data(vivas: list[Despesa], _documento: Documento) -> dict[int, Corte]:
+    """RN-008, RN-009, RN-010: limite por data e categoria, consumido na ordem da posição.
+
+    Cada despesa recebe o menor valor entre o seu valor considerado e o saldo deixado
+    pelas anteriores; o excedente é cortado. `vivas` chega em ordem de posição.
+    """
+    saldos: dict[tuple, Decimal] = {}
+    cortes: dict[int, Corte] = {}
+    for despesa in vivas:
+        limite = politica.LIMITE_POR_DATA[despesa.categoria]
+        chave = (despesa.data, despesa.categoria)
+        saldo = saldos.get(chave, limite)
+        reembolsavel = min(despesa.valor_considerado, saldo)
+        saldos[chave] = saldo - reembolsavel
+        if reembolsavel < despesa.valor_considerado:
+            cortes[despesa.posicao] = Corte(
+                reembolsavel,
+                Motivo.LIMITE_DIARIO,
+                justificativas.limite_diario(
+                    despesa.categoria, limite, despesa.valor_considerado - reembolsavel
+                ),
+            )
+    return cortes
