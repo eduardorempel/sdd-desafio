@@ -220,7 +220,7 @@
   - **Teste:** `tests/test_secao9_aceite_exemplo.py`
   - **Commit:**
 
-- [ ] **T-021** — Texto exato das justificativas dos exemplos da §4 e verificação
+- [x] **T-021** — Texto exato das justificativas dos exemplos da §4 e verificação
   de que todo item cita uma RN.
   - **Atende:** spec §4 (exemplo), spec §9 (justificativa cita RN)
   - **Aceite:** d-001, d-002 e d-004 têm exatamente as justificativas da §4; todo

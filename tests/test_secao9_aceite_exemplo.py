@@ -1,4 +1,5 @@
 import json
+import re
 from decimal import Decimal
 from pathlib import Path
 
@@ -64,3 +65,27 @@ def test_secao9_colaborador_e_periodo_copiados(saida):
     entrada = json.loads(EXEMPLO.read_text(encoding="utf-8"))
     assert saida["colaborador"] == entrada["colaborador"]
     assert saida["periodo"] == entrada["periodo"]
+
+
+JUSTIFICATIVAS_SECAO4 = {
+    "d-001": (
+        "Limite diário de alimentação de R$ 60,00 aplicado; "
+        "excedente de R$ 12,50 cortado (RN-008, RN-010)."
+    ),
+    "d-002": (
+        "Limite diário de alimentação de R$ 60,00 já consumido por d-001 em 2026-07-03 "
+        "(RN-008, RN-009)."
+    ),
+    "d-004": "Valor acima de R$ 100,00 sem nota fiscal (RN-007).",
+}
+
+
+@pytest.mark.parametrize("id_", list(JUSTIFICATIVAS_SECAO4))
+def test_justificativas_exemplo_secao4(saida, id_):
+    item = next(i for i in saida["itens"] if i["id"] == id_)
+    assert item["justificativa"] == JUSTIFICATIVAS_SECAO4[id_]
+
+
+def test_todo_item_cita_rn(saida):
+    for item in saida["itens"]:
+        assert re.search(r"RN-\d{3}", item["justificativa"]), item["id"]
