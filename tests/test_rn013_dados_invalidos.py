@@ -3,7 +3,8 @@ from decimal import Decimal
 
 import pytest
 
-from reembolso.entrada import EntradaInvalida, ler_json, validar_documento
+from reembolso.entrada import EntradaInvalida, ler_json, validar_despesa, validar_documento
+from reembolso.modelo import Invalida
 
 
 def test_rn013_json_invalido_erro_geral():
@@ -32,6 +33,9 @@ def test_dt001_metade_nao_sofre_erro_de_float():
     assert ler_json('{"valor": 10.005}')["valor"] == Decimal("10.005")
 
 
+_REMOVER = object()
+
+
 def _documento(**alteracoes):
     doc = {
         "colaborador": {"id": "c-0417", "nome": "Marina Volpi"},
@@ -48,9 +52,6 @@ def _documento(**alteracoes):
         else:
             alvo[campo] = valor
     return doc
-
-
-_REMOVER = object()
 
 
 @pytest.mark.parametrize(
@@ -119,3 +120,120 @@ def test_rn013_erro_geral_nao_ocorre_com_campos_informativos_e_desconhecidos():
 
 def test_rn013_erro_geral_nao_ocorre_com_inicio_igual_ao_fim():
     validar_documento(_documento(periodo__inicio="2026-07-31"))
+
+
+def _despesa(**alteracoes):
+    item = {
+        "id": "d-001",
+        "data": "2026-07-03",
+        "categoria": "alimentacao",
+        "descricao": "Almoco",
+        "fornecedor": "Restaurante Tavola",
+        "valor": Decimal("50.00"),
+        "tem_nota_fiscal": True,
+    }
+    for campo, valor in alteracoes.items():
+        if valor is _REMOVER:
+            del item[campo]
+        else:
+            item[campo] = valor
+    return item
+
+
+@pytest.mark.parametrize(
+    "alteracoes",
+    [
+        {"tem_nota_fiscal": _REMOVER},
+        {"tem_nota_fiscal": "sim"},
+        {"tem_nota_fiscal": 1},
+        {"fornecedor": "   "},
+        {"fornecedor": _REMOVER},
+        {"fornecedor": 42},
+        {"categoria": ""},
+        {"categoria": None},
+        {"data": "2026-7-3"},
+        {"data": "2026-02-30"},
+        {"data": "20260703"},
+        {"data": "2026-07-03T10:00"},
+        {"data": _REMOVER},
+        {"valor": "72.50"},
+        {"valor": True},
+        {"valor": None},
+        {"valor": _REMOVER},
+    ],
+    ids=[
+        "sem_tem_nota_fiscal",
+        "tem_nota_fiscal_texto",
+        "tem_nota_fiscal_numero",
+        "fornecedor_so_espacos",
+        "sem_fornecedor",
+        "fornecedor_numerico",
+        "categoria_vazia",
+        "categoria_nula",
+        "data_fora_do_formato",
+        "data_inexistente",
+        "data_sem_hifens",
+        "data_com_hora",
+        "sem_data",
+        "valor_texto",
+        "valor_booleano",
+        "valor_nulo",
+        "sem_valor",
+    ],
+)
+def test_rn013_despesa_invalida_vira_dados_invalidos(alteracoes):
+    invalida = validar_despesa(_despesa(**alteracoes), posicao=3)
+    assert isinstance(invalida, Invalida)
+    assert invalida.posicao == 3
+    assert invalida.id == "d-001"
+    assert invalida.detalhe
+
+
+@pytest.mark.parametrize(
+    "id_",
+    [17, "", "   ", None, _REMOVER],
+    ids=["numerico", "vazio", "so_espacos", "nulo", "ausente"],
+)
+def test_rn013_despesa_com_id_invalido_tem_id_nulo(id_):
+    invalida = validar_despesa(_despesa(id=id_), posicao=1)
+    assert isinstance(invalida, Invalida)
+    assert invalida.id is None
+
+
+@pytest.mark.parametrize(
+    "valor", ["72.50", True, None, _REMOVER], ids=["texto", "booleano", "nulo", "ausente"]
+)
+def test_rn013_despesa_com_valor_nao_numerico_tem_valor_informado_nulo(valor):
+    invalida = validar_despesa(_despesa(valor=valor), posicao=1)
+    assert invalida.valor_informado is None
+
+
+def test_rn013_despesa_com_valor_valido_e_outro_campo_invalido_mantem_valor_informado():
+    invalida = validar_despesa(_despesa(tem_nota_fiscal=_REMOVER), posicao=1)
+    assert invalida.valor_informado == Decimal("50.00")
+
+
+def test_rn013_despesa_com_valor_inteiro_valido_mantem_valor_informado():
+    invalida = validar_despesa(_despesa(valor=50, fornecedor=""), posicao=1)
+    assert invalida.valor_informado == Decimal("50")
+
+
+def test_rn013_despesa_detalhe_cita_o_campo():
+    assert "tem_nota_fiscal" in validar_despesa(_despesa(tem_nota_fiscal=_REMOVER), 1).detalhe
+
+
+def test_rn013_despesa_campo_desconhecido_e_ignorado():
+    assert validar_despesa(_despesa(moeda="USD"), posicao=1) is None
+
+
+def test_rn013_despesa_descricao_malformada_e_ignorada():
+    assert validar_despesa(_despesa(descricao=123), posicao=1) is None
+
+
+def test_rn013_despesa_sem_descricao_e_valida():
+    assert validar_despesa(_despesa(descricao=_REMOVER), posicao=1) is None
+
+
+@pytest.mark.parametrize("valor", [Decimal("-45.00"), 0, 100], ids=["negativo", "zero", "inteiro"])
+def test_rn013_despesa_com_valor_numerico_e_valida(valor):
+    assert validar_despesa(_despesa(valor=valor), posicao=1) is None

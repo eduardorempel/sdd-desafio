@@ -6,6 +6,8 @@ from dataclasses import dataclass
 from datetime import date
 from decimal import Decimal
 
+from reembolso.modelo import Invalida
+
 _FORMATO_DATA = re.compile(r"[0-9]{4}-[0-9]{2}-[0-9]{2}")
 
 
@@ -89,3 +91,60 @@ def validar_documento(dados: object) -> Cabecalho:
             raise EntradaInvalida(f"item {posicao} de despesas não é objeto")
 
     return Cabecalho(colaborador, periodo, inicio, fim, itens)
+
+
+def _numero(valor: object) -> Decimal | None:
+    """Valor numérico como Decimal; `bool` não é número (DT-002)."""
+    if isinstance(valor, bool):
+        return None
+    if isinstance(valor, Decimal):
+        return valor
+    if isinstance(valor, int):
+        return Decimal(valor)
+    return None
+
+
+def _problema_texto(item: dict, campo: str) -> str | None:
+    if campo not in item:
+        return f"{campo} ausente"
+    if not isinstance(item[campo], str):
+        return f"{campo} não é texto"
+    if not texto_preenchido(item[campo]):
+        return f"{campo} vazio"
+    return None
+
+
+def _problemas(item: dict) -> list[str]:
+    """Lista os casos de erro em uma despesa previstos na RN-013, na ordem dos campos."""
+    problemas = [_problema_texto(item, "id")]
+    if "data" not in item:
+        problemas.append("data ausente")
+    elif data_valida(item["data"]) is None:
+        problemas.append("data não é data válida (AAAA-MM-DD)")
+    problemas.append(_problema_texto(item, "categoria"))
+    problemas.append(_problema_texto(item, "fornecedor"))
+    if "valor" not in item:
+        problemas.append("valor ausente")
+    elif _numero(item["valor"]) is None:
+        problemas.append("valor não é numérico")
+    if "tem_nota_fiscal" not in item:
+        problemas.append("tem_nota_fiscal ausente")
+    elif not isinstance(item["tem_nota_fiscal"], bool):
+        problemas.append("tem_nota_fiscal não é verdadeiro/falso")
+    return [p for p in problemas if p is not None]
+
+
+def validar_despesa(item: dict, posicao: int) -> Invalida | None:
+    """Devolve `Invalida` se a despesa tiver erro da RN-013, ou `None` se for válida.
+
+    Campos informativos (`descricao`) e desconhecidos não são lidos.
+    """
+    problemas = _problemas(item)
+    if not problemas:
+        return None
+    return Invalida(
+        posicao=posicao,
+        id=item["id"] if _problema_texto(item, "id") is None else None,
+        valor_informado=_numero(item.get("valor")),
+        detalhe="; ".join(problemas),
+    )

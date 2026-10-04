@@ -78,7 +78,7 @@
   - **Teste:** `tests/test_rn013_dados_invalidos.py::test_rn013_erro_geral_*`
   - **Commit:**
 
-- [ ] **T-007** — Validação de cada despesa: falha produz `Invalida` com
+- [x] **T-007** — Validação de cada despesa: falha produz `Invalida` com
   `DADOS_INVALIDOS`. `id` é nulo quando o problema está no `id`; `valor_informado`
   é nulo quando o valor está ausente ou não é numérico; `bool` não é aceito como
   número.
