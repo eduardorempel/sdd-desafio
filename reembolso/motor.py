@@ -42,6 +42,7 @@ Etapa = PorItem | EmGrupo
 # Ordem das etapas 3 a 8 da spec §8. As etapas 1 e 2 acontecem em entrada.py.
 ETAPAS: list[Etapa] = [
     PorItem(regras.valor_negativo),  # RN-005 → VALOR_NEGATIVO
+    PorItem(regras.periodo),  # RN-004 → FORA_DO_PERIODO
 ]
 
 

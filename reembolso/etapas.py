@@ -11,3 +11,13 @@ def valor_negativo(despesa: Despesa, _documento: Documento) -> Recusa | None:
             Motivo.VALOR_NEGATIVO, justificativas.valor_negativo(despesa.valor_considerado)
         )
     return None
+
+
+def periodo(despesa: Despesa, documento: Documento) -> Recusa | None:
+    """RN-004: a data deve estar entre início e fim, bordas incluídas; competência não é usada."""
+    if documento.inicio <= despesa.data <= documento.fim:
+        return None
+    return Recusa(
+        Motivo.FORA_DO_PERIODO,
+        justificativas.fora_do_periodo(despesa.data, documento.inicio, documento.fim),
+    )

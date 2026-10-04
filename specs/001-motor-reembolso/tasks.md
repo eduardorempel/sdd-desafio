@@ -122,7 +122,7 @@
   - **Teste:** `tests/test_rn005_valor_negativo.py`
   - **Commit:**
 
-- [ ] **T-011** — Etapa de período, com as bordas incluídas. `competencia` não é
+- [x] **T-011** — Etapa de período, com as bordas incluídas. `competencia` não é
   usada.
   - **Atende:** RN-004, AMB-009
   - **Aceite:** d-008 (2026-04-15) → `FORA_DO_PERIODO`; data igual a `inicio` e

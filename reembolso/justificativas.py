@@ -1,5 +1,6 @@
 """Textos das justificativas (spec §4, DT-008)."""
 
+from datetime import date
 from decimal import Decimal
 
 
@@ -17,6 +18,10 @@ def valor_negativo(valor: Decimal) -> str:
     return (
         f"Valor negativo ({reais(valor)}) não é reembolsável e não abate outras despesas (RN-005)."
     )
+
+
+def fora_do_periodo(data: date, inicio: date, fim: date) -> str:
+    return f"Data {data} fora do período de {inicio} a {fim} (RN-004)."
 
 
 def aprovado() -> str:
