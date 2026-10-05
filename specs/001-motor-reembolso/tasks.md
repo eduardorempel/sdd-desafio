@@ -593,7 +593,7 @@ Com a T-031, as constantes de `politica.py` deixam de existir (fim da regra
     `::test_secao7_tem_71_casos`
   - **Commit:**
 
-- [ ] **T-040** — Aceite dos dois documentos do envelope pela CLI, com
+- [x] **T-040** — Aceite dos dois documentos do envelope pela CLI, com
   `politica-v4.json` e `cambio.json` (`test(T-040)`).
   - **Atende:** spec §9 (envelope), spec §4 (Exemplo 2), RN-014, RN-016,
     AMB-019, AMB-038
