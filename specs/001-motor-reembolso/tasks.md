@@ -527,7 +527,7 @@ Com a T-031, as constantes de `politica.py` deixam de existir (fim da regra
   - **Teste:** `tests/test_rn006_duplicatas.py`
   - **Commit:**
 
-- [ ] **T-037** — Saída com os campos novos, na ordem da §4: `moeda`,
+- [x] **T-037** — Saída com os campos novos, na ordem da §4: `moeda`,
   `taxa_cambio` (como está no documento, sem quantizar) e `data_cotacao`
   (`AAAA-MM-DD`); `valor_considerado` nulo também em `COTACAO_INDISPONIVEL`;
   `moeda` nula em `DADOS_INVALIDOS`. Revisa a T-018.

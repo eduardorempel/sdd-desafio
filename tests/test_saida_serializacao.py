@@ -1,7 +1,8 @@
 import json
+from datetime import date
 from decimal import Decimal
 
-from fabrica import despesa, documento, invalida, politica_aplicavel
+from fabrica import cambio, despesa, documento, invalida, politica_aplicavel
 
 from reembolso.modelo import Motivo, Resultado, Status
 from reembolso.motor import calcular
@@ -58,6 +59,9 @@ def test_dt005_nulos_em_dados_invalidos():
     assert item["id"] is None
     assert item["valor_informado"] is None
     assert item["valor_considerado"] is None
+    assert item["moeda"] is None
+    assert item["taxa_cambio"] is None
+    assert item["data_cotacao"] is None
     assert item["valor_reembolsavel"] == 0
     assert item["motivo"] == Motivo.DADOS_INVALIDOS.value
 
@@ -106,6 +110,9 @@ def test_dt005_campos_do_item_na_ordem_da_spec():
     assert list(item) == [
         "id",
         "valor_informado",
+        "moeda",
+        "taxa_cambio",
+        "data_cotacao",
         "valor_considerado",
         "valor_reembolsavel",
         "status",
@@ -118,3 +125,38 @@ def test_dt005_saida_e_json_valido_com_recuo():
     texto = _texto(_resultado(), _resultado(id="d-002"))
     assert json.loads(texto)["itens"][1]["id"] == "d-002"
     assert texto.startswith('{\n  "colaborador": {\n    "id": "c-0417"')
+
+
+def test_dt005_moeda_e_cotacao_em_brl():
+    resultados = calcular(documento(despesa(1, valor="47.20")), politica_aplicavel())
+    texto = _texto(*resultados)
+    item = json.loads(texto)["itens"][0]
+    assert item["moeda"] == "BRL"
+    assert item["taxa_cambio"] is None
+    assert item["data_cotacao"] is None
+
+
+def test_dt005_taxa_cambio_sem_quantizar():
+    e002 = despesa(1, id="e-002", data="2026-07-14", valor="22.00", moeda="EUR")
+    resultados = calcular(documento(e002), politica_aplicavel("CC-COMERCIAL"), cambio())
+    texto = _texto(*resultados)
+    assert '"valor_informado": 22.00' in texto
+    assert '"moeda": "EUR"' in texto
+    assert '"taxa_cambio": 5.93' in texto
+    assert '"data_cotacao": "2026-07-14"' in texto
+    assert '"valor_considerado": 130.46' in texto
+    assert '"taxa_cambio": 5.4219' in _texto(
+        _resultado(moeda="USD", taxa_cambio=Decimal("5.4219"), data_cotacao=date(2026, 7, 13))
+    )
+
+
+def test_dt005_nulos_em_cotacao_indisponivel():
+    e006 = despesa(1, id="e-006", data="2026-07-21", valor="55.00", moeda="GBP")
+    resultados = calcular(documento(e006), politica_aplicavel("CC-COMERCIAL"), cambio())
+    item = json.loads(_texto(*resultados))["itens"][0]
+    assert item["moeda"] == "GBP"
+    assert item["motivo"] == Motivo.COTACAO_INDISPONIVEL.value
+    assert item["valor_considerado"] is None
+    assert item["taxa_cambio"] is None
+    assert item["data_cotacao"] is None
+    assert item["valor_reembolsavel"] == 0

@@ -13,9 +13,15 @@ def _dinheiro(valor: Decimal | None) -> Decimal | None:
 
 
 def _item(resultado: Resultado) -> dict:
+    """Campos na ordem da tabela da spec §4. `valor_informado` e `taxa_cambio` saem como vieram,
+    sem quantizar; `data_cotacao`, como texto `AAAA-MM-DD` (DT-005)."""
+    data_cotacao = resultado.data_cotacao
     return {
         "id": resultado.id,
         "valor_informado": resultado.valor_informado,
+        "moeda": resultado.moeda,
+        "taxa_cambio": resultado.taxa_cambio,
+        "data_cotacao": None if data_cotacao is None else data_cotacao.isoformat(),
         "valor_considerado": _dinheiro(resultado.valor_considerado),
         "valor_reembolsavel": _dinheiro(resultado.valor_reembolsavel),
         "status": resultado.status.value,
