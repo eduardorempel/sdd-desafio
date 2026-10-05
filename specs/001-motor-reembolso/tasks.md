@@ -544,7 +544,7 @@ Com a T-031, as constantes de `politica.py` deixam de existir (fim da regra
 
 ### 7.3 — Integração, aceite e rastreabilidade
 
-- [ ] **T-038** — Fluxo real completo: a CLI ganha `--cambio` (opcional) e passa
+- [x] **T-038** — Fluxo real completo: a CLI ganha `--cambio` (opcional) e passa
   a escolher a política pelo `colaborador.centro_custo` (T-028). Ordem de
   leitura: despesas, política, câmbio (o câmbio compara `moeda_base` com a
   política). Sem `--cambio`, o motor recebe `cambio=None`. No mesmo

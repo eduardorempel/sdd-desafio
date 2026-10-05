@@ -36,7 +36,7 @@ Se o que eu pedi não está coberto por nenhuma task, me avise em vez de impleme
 
 - Linguagem: Python 3.12+ (sem dependências de runtime; pytest e ruff como dev)
 - Instalar: `python -m venv .venv` e `.venv/Scripts/python -m pip install -e ".[dev]"`
-- Rodar: `python -m reembolso calcular --input despesas.json --output resultado.json`
+- Rodar: `python -m reembolso calcular --input despesas.json --politica politica.json [--cambio cambio.json] --output resultado.json`
 - Testes: `python -m pytest`
 - Lint/format: `ruff check .` · `ruff format .`
 

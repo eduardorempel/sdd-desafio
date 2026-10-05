@@ -74,14 +74,17 @@ ALIM_0703 = {"data": "2026-07-03"}
 TRANSP_0706 = {"data": "2026-07-06", "categoria": "transporte_urbano", "fornecedor": "TaxiApp"}
 BISTRO = {"data": "2026-07-09", "fornecedor": "Bistro Central", "valor": Decimal("54.90")}
 HOSP_0714 = {"data": "2026-07-14", "categoria": "hospedagem"}
+ENG = {"centro_custo": "CC-ENG-PLATAFORMA"}
+COMERCIAL = {"centro_custo": "CC-COMERCIAL"}
 
 CASOS = [
     pytest.param(
         doc(
             d("d-001", **ALIM_0703, valor=Decimal("72.50")),
             d("d-002", **ALIM_0703, valor=Decimal("38.00")),
+            colaborador=ENG,
         ),
-        [limitado("60.00"), limitado("0.00")],
+        [aprovado("72.50"), limitado("2.50")],
         id="Duas despesas no mesmo dia somam acima do limite",
     ),
     pytest.param(
@@ -166,8 +169,11 @@ CASOS = [
         id="Arredondamento na metade",
     ),
     pytest.param(
-        doc(d("d-010", **HOSP_0714, descricao="Hotel Rio - 2 diarias", valor=Decimal("480.00"))),
-        [limitado("250.00")],
+        doc(
+            d("e-007", **HOSP_0714, descricao="Hotel Londres - 3 noites", valor=Decimal("1200.00")),
+            colaborador=COMERCIAL,
+        ),
+        [limitado("400.00")],
         id="Hospedagem com várias diárias na descrição",
     ),
     pytest.param(
@@ -184,8 +190,11 @@ CASOS = [
         id="Hospedagem sem nota acima de 100",
     ),
     pytest.param(
-        doc(d("d-014", data="2026-07-31", categoria="ALIMENTACAO", valor=Decimal("61.00"))),
-        [limitado("60.00")],
+        doc(
+            d("d-014", data="2026-07-31", categoria="ALIMENTACAO", valor=Decimal("61.00")),
+            colaborador=ENG,
+        ),
+        [aprovado("61.00")],
         id="Categoria em maiúsculas",
     ),
     pytest.param(
@@ -278,7 +287,9 @@ CASOS = [
 def _processar(texto: str) -> dict:
     documento = ler_documento(texto)
     return json.loads(
-        serializar(montar_saida(documento, calcular(documento, politica_aplicavel()))),
+        serializar(
+            montar_saida(documento, calcular(documento, politica_aplicavel(documento.centro_custo)))
+        ),
         parse_float=Decimal,
     )
 

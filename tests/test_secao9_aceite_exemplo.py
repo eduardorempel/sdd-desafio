@@ -17,8 +17,8 @@ POLITICA = Path(__file__).parent.parent / "exemplos" / "envelope" / "politica-v4
 
 # Tabela da seção 9 da spec: id, valor_reembolsavel, status, motivo.
 TABELA_SECAO9 = [
-    ("d-001", "60.00", "limitado", "LIMITE_DIARIO"),
-    ("d-002", "0.00", "limitado", "LIMITE_DIARIO"),
+    ("d-001", "72.50", "aprovado", None),
+    ("d-002", "2.50", "limitado", "LIMITE_DIARIO"),
     ("d-003", "80.00", "limitado", "LIMITE_DIARIO"),
     ("d-004", "0.00", "recusado", "NOTA_FISCAL_AUSENTE"),
     ("d-005", "0.00", "recusado", "CATEGORIA_NAO_REEMBOLSAVEL"),
@@ -26,17 +26,18 @@ TABELA_SECAO9 = [
     ("d-007", "0.00", "recusado", "DUPLICATA"),
     ("d-008", "0.00", "recusado", "FORA_DO_PERIODO"),
     ("d-009", "0.00", "recusado", "VALOR_NEGATIVO"),
-    ("d-010", "250.00", "limitado", "LIMITE_DIARIO"),
+    ("d-010", "0.00", "recusado", "CATEGORIA_NAO_REEMBOLSAVEL"),
     ("d-011", "33.33", "aprovado", None),
     ("d-012", "47.20", "aprovado", None),
-    ("d-013", "0.00", "recusado", "NOTA_FISCAL_AUSENTE"),
-    ("d-014", "60.00", "limitado", "LIMITE_DIARIO"),
+    ("d-013", "0.00", "recusado", "CATEGORIA_NAO_REEMBOLSAVEL"),
+    ("d-014", "61.00", "aprovado", None),
 ]
 
 
 def _processar(texto: str) -> str:
     documento = ler_documento(texto)
-    return serializar(montar_saida(documento, calcular(documento, politica_aplicavel())))
+    politica = politica_aplicavel(documento.centro_custo)
+    return serializar(montar_saida(documento, calcular(documento, politica)))
 
 
 @pytest.fixture(scope="module")
@@ -57,7 +58,7 @@ def test_secao9_linha_da_tabela(saida, posicao, linha):
 
 
 def test_secao9_total_reembolsavel(saida):
-    assert saida["total_reembolsavel"] == Decimal("585.43")
+    assert saida["total_reembolsavel"] == Decimal("351.43")
 
 
 def test_secao9_um_item_por_despesa_na_mesma_ordem(saida):
@@ -73,13 +74,13 @@ def test_secao9_colaborador_e_periodo_copiados(saida):
 
 JUSTIFICATIVAS_SECAO4 = {
     "d-001": (
-        "Limite diário de alimentação de R$ 60,00 (política padrão) aplicado; "
-        "excedente de R$ 12,50 cortado (RN-008, RN-010)."
+        "Despesa aprovada: passou por todas as regras e é reembolsada integralmente "
+        "(RN-001, RN-004 a RN-008)."
     ),
     "d-002": (
-        "Limite diário de alimentação de R$ 60,00 (política padrão) já consumido por d-001 "
-        "em 2026-07-03 "
-        "(RN-008, RN-009)."
+        "Limite diário de alimentação de R$ 75,00 (centro de custo CC-ENG-PLATAFORMA), "
+        "com R$ 72,50 já consumido por d-001 em 2026-07-03; excedente de R$ 35,50 cortado "
+        "(RN-008, RN-009, RN-010)."
     ),
     "d-004": "Valor acima de R$ 100,00 sem nota fiscal (RN-007).",
 }
