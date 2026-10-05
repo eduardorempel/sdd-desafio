@@ -94,7 +94,7 @@ def validar_documento(dados: object) -> Cabecalho:
     return Cabecalho(colaborador, periodo, inicio, fim, itens)
 
 
-def _numero(valor: object) -> Decimal | None:
+def numero(valor: object) -> Decimal | None:
     """Valor numérico como Decimal; `bool` não é número (DT-002)."""
     if isinstance(valor, bool):
         return None
@@ -126,7 +126,7 @@ def _problemas(item: dict) -> list[str]:
     problemas.append(_problema_texto(item, "fornecedor"))
     if "valor" not in item:
         problemas.append("valor ausente")
-    elif _numero(item["valor"]) is None:
+    elif numero(item["valor"]) is None:
         problemas.append("valor não é numérico")
     if "tem_nota_fiscal" not in item:
         problemas.append("tem_nota_fiscal ausente")
@@ -146,7 +146,7 @@ def validar_despesa(item: dict, posicao: int) -> Invalida | None:
     return Invalida(
         posicao=posicao,
         id=item["id"] if _problema_texto(item, "id") is None else None,
-        valor_informado=_numero(item.get("valor")),
+        valor_informado=numero(item.get("valor")),
         detalhe="; ".join(problemas),
     )
 
@@ -156,7 +156,7 @@ def ler_despesa(item: dict, posicao: int) -> Despesa | Invalida:
     invalida = validar_despesa(item, posicao)
     if invalida is not None:
         return invalida
-    valor_informado = _numero(item["valor"])
+    valor_informado = numero(item["valor"])
     return Despesa(
         posicao=posicao,
         id=item["id"],

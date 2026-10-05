@@ -1,4 +1,4 @@
-"""Normalização de texto (RN-002) e arredondamento (RN-003)."""
+"""Normalização de texto (RN-002), de moeda (RN-017) e arredondamento (RN-003)."""
 
 import unicodedata
 from decimal import ROUND_HALF_UP, Context, Decimal
@@ -17,6 +17,11 @@ def normalizar_texto(texto: str) -> str:
     decomposto = unicodedata.normalize("NFD", texto.strip().lower())
     sem_acentos = "".join(c for c in decomposto if unicodedata.category(c) != "Mn")
     return unicodedata.normalize("NFC", sem_acentos)
+
+
+def normalizar_moeda(codigo: str) -> str:
+    """Remove espaços das pontas e passa para maiúsculas (RN-017, DT-007)."""
+    return codigo.strip().upper()
 
 
 def arredondar(valor: Decimal) -> Decimal:

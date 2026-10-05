@@ -1,6 +1,10 @@
-"""Valores da política de reembolso, como dados (plan §4, DT-004)."""
+"""Documento de política de reembolso (RN-015) e valores da política, como dados (plan §4)."""
 
+from dataclasses import dataclass
 from decimal import Decimal
+
+from reembolso.entrada import EntradaInvalida, ler_json, numero, texto_preenchido
+from reembolso.normalizacao import normalizar_moeda, normalizar_texto
 
 # RN-001: lista fechada de categorias reembolsáveis, já normalizadas (RN-002).
 CATEGORIAS_REEMBOLSAVEIS = frozenset({"alimentacao", "transporte_urbano", "hospedagem"})
@@ -14,3 +18,105 @@ LIMITE_POR_DATA = {
     "transporte_urbano": Decimal("80.00"),
     "hospedagem": Decimal("250.00"),
 }
+
+MOEDA_BASE = "BRL"
+PERIODICIDADES = frozenset({"dia", "diaria"})
+
+
+@dataclass(frozen=True)
+class Centro:
+    """Tabela de um centro de custo do documento de política."""
+
+    codigo: str  # grafia da chave no documento (AMB-038)
+    limites: dict[str, Decimal]  # categoria normalizada → limite
+
+
+@dataclass(frozen=True)
+class Politica:
+    """Documento de política validado (RN-015)."""
+
+    moeda_base: str
+    limiar_nota_fiscal: Decimal
+    padrao: dict[str, Decimal]  # categoria normalizada → limite
+    centros: dict[str, Centro]  # chave normalizada → Centro
+
+
+def _erro(mensagem: str) -> EntradaInvalida:
+    return EntradaInvalida(f"documento de política inválido: {mensagem}")
+
+
+def _objeto(valor: object, campo: str) -> dict:
+    if not isinstance(valor, dict):
+        raise _erro(f"{campo} ausente ou não é objeto")
+    return valor
+
+
+def _nao_negativo(valor: object, campo: str) -> Decimal:
+    convertido = numero(valor)
+    if convertido is None:
+        raise _erro(f"{campo} ausente ou não é número")
+    if convertido < 0:
+        raise _erro(f"{campo} é negativo")
+    return convertido
+
+
+def _limite(entrada: object, campo: str) -> Decimal:
+    """Uma entrada de categoria: limite ≥ 0 e periodicidade `dia` ou `diaria` (RN-015).
+
+    A periodicidade não é guardada: as duas têm o mesmo efeito (AMB-036).
+    """
+    entrada = _objeto(entrada, campo)
+    limite = _nao_negativo(entrada.get("limite"), f"{campo}.limite")
+    periodicidade = entrada.get("periodicidade")
+    if not isinstance(periodicidade, str):
+        raise _erro(f"{campo}.periodicidade ausente ou não é texto")
+    if normalizar_texto(periodicidade) not in PERIODICIDADES:
+        raise _erro(f"{campo}.periodicidade {periodicidade!r} não é 'dia' nem 'diaria'")
+    return limite
+
+
+def _tabela(tabela: object, campo: str) -> dict[str, Decimal]:
+    """Categorias com chave normalizada (RN-002); chaves que colidem são erro (RN-015)."""
+    tabela = _objeto(tabela, campo)
+    limites = {
+        normalizar_texto(categoria): _limite(entrada, f"{campo}.{categoria}")
+        for categoria, entrada in tabela.items()
+    }
+    if len(limites) != len(tabela):
+        raise _erro(f"{campo} tem categorias iguais depois da normalização")
+    return limites
+
+
+def validar_politica(dados: object) -> Politica:
+    """Verifica os casos de erro geral da RN-015 e levanta `EntradaInvalida`.
+
+    `versao`, `vigencia`, `acrescimo_em_viagem_percentual`, `observacao` e campos não
+    listados não são lidos.
+    """
+    dados = _objeto(dados, "documento")
+    moeda_base = dados.get("moeda_base")
+    if not texto_preenchido(moeda_base):
+        raise _erro("moeda_base ausente, vazia ou não é texto")
+    if normalizar_moeda(moeda_base) != MOEDA_BASE:
+        raise _erro(f"moeda_base {moeda_base!r} não é {MOEDA_BASE}")
+    limiar = _nao_negativo(
+        dados.get("nota_fiscal_obrigatoria_acima_de"), "nota_fiscal_obrigatoria_acima_de"
+    )
+    padrao = _tabela(dados.get("padrao"), "padrao")
+    centros_custo = _objeto(dados.get("centros_custo"), "centros_custo")
+    centros = {
+        normalizar_texto(codigo): Centro(codigo, _tabela(tabela, f"centros_custo.{codigo}"))
+        for codigo, tabela in centros_custo.items()
+    }
+    if len(centros) != len(centros_custo):
+        raise _erro("centros_custo tem centros iguais depois da normalização")
+    return Politica(MOEDA_BASE, limiar, padrao, centros)
+
+
+def ler_politica(texto: str) -> Politica:
+    """Texto JSON → `Politica`. Levanta `EntradaInvalida` nos casos de erro geral (RN-015)."""
+    try:
+        dados = ler_json(texto)
+    except EntradaInvalida as erro:
+        raise _erro(str(erro)) from erro
+    return validar_politica(dados)

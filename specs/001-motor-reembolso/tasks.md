@@ -303,7 +303,7 @@ Com a T-031, as constantes de `politica.py` deixam de existir (fim da regra
     (atualizado para oito motivos)
   - **Commit:**
 
-- [ ] **T-027** — Leitura e validação do documento de política (`politica.py`
+- [x] **T-027** — Leitura e validação do documento de política (`politica.py`
   passa a ler `politica-v4.json` e devolver um objeto `Politica`). Chaves de
   categoria e de centro de custo e o valor de `periodicidade` normalizados pela
   RN-002; `moeda_base` normalizada pela RN-017. A grafia original de cada chave
