@@ -268,11 +268,360 @@
 
 ---
 
-## Fase 7 — Envelope (criar no Dia 2)
+## Fase 7 — Envelope (Dia 2)
 
-<Novas tasks a partir da mudança de requisito. Numeração continua de onde parou
-(T-026) — não reinicie e não renumere as antigas: a numeração é o eixo da
-rastreabilidade.>
+**Baseado em:** spec 2.1 (D-002, D-003) · plan 2.0. Nomes de módulo, função,
+tipo e argumento de CLI citados abaixo seguem o plan 2.0 (seções 2 a 4 e DT-004
+a DT-014).
+
+Sequência pensada para a suíte ficar verde em todo commit:
+
+- T-026 a T-030 criam os documentos novos e o campo `moeda`, sem mudar o
+  resultado de nenhuma despesa.
+- T-031 a T-037 levam as regras para a política externa e o câmbio. Até a
+  T-038, o fluxo real (CLI e testes de exemplo) usa a **política padrão** da
+  v4, que tem os mesmos valores da v3, e por isso os testes de aceite da v3
+  continuam passando. As regras novas são testadas passando a política
+  aplicável explicitamente ao motor.
+- T-038 liga a seleção por centro de custo e o câmbio no fluxo real e atualiza,
+  no mesmo commit, os testes da v3 cujo resultado muda.
+- T-039 a T-041 fecham a §7, a §9 e a rastreabilidade.
+
+Com a T-031, as constantes de `politica.py` deixam de existir (fim da regra
+"constantes sem task própria" do topo deste arquivo).
+
+### 7.1 — Modelo e documentos de entrada
+
+- [ ] **T-026** — `modelo.py`: motivo `COTACAO_INDISPONIVEL`; `Despesa` ganha
+  `moeda`, `taxa_cambio` e `data_cotacao`; `Resultado` ganha `moeda`,
+  `taxa_cambio` e `data_cotacao`. Valores padrão (`BRL`, nulo, nulo) mantêm as
+  despesas da v3 como estão.
+  - **Atende:** spec §4 (tabela de motivos, campos de saída), RN-018, AMB-025, AMB-033
+  - **Aceite:** os oito motivos têm exatamente os códigos da spec;
+    `COTACAO_INDISPONIVEL` existe; a suíte da v3 continua passando sem alteração.
+  - **Teste:** `tests/test_modelo.py::test_motivos_iguais_aos_codigos_da_spec`
+    (atualizado para oito motivos)
+  - **Commit:**
+
+- [ ] **T-027** — Leitura e validação do documento de política (`politica.py`
+  passa a ler `politica-v4.json` e devolver um objeto `Politica`). Chaves de
+  categoria e de centro de custo e o valor de `periodicidade` normalizados pela
+  RN-002; `moeda_base` normalizada pela RN-017. A grafia original de cada chave
+  de centro de custo é guardada para as justificativas (AMB-038). Erro →
+  `EntradaInvalida`. Ainda não é usado pelo motor.
+  - **Atende:** RN-015, RN-002 (chaves e periodicidade do documento), RN-013
+    (erro geral), AMB-031, AMB-034, AMB-036, AMB-038, AMB-039
+  - **Aceite:** `politica-v4.json` → aceito, com `padrao` e três centros.
+    Erro geral para: JSON ilegível, `NaN`, `Infinity`; sem `padrao`, sem
+    `centros_custo`, sem `moeda_base` ou sem `nota_fiscal_obrigatoria_acima_de`;
+    `padrao` que não é objeto; entrada de categoria que não é objeto; limite
+    `-1`, `"60"` ou `true`; limiar negativo ou não numérico; `moeda_base` `USD`;
+    `"periodicidade": "mes"`, `1` ou ausente; `Alimentação` e `alimentacao` na
+    mesma tabela; `CC-ADM` e ` cc-adm ` em `centros_custo`. Sem erro:
+    `moeda_base` `" brl "`; `centros_custo: {}`; limite `0`;
+    `"periodicidade": "Dia"` e `" dia "` → `dia`; `"DIARIA"` → `diaria`; a chave
+    `CC-COMERCIAL` mantém essa grafia para as justificativas;
+    `"acrescimo_em_viagem_percentual": "x"`,
+    `versao`, `vigencia` e `observacao` com qualquer valor.
+  - **Teste:** `tests/test_rn015_politica.py`
+  - **Commit:**
+
+- [ ] **T-028** — Política aplicável: `politica_aplicavel(politica, centro_custo)`
+  devolve uma `PoliticaAplicavel` cujo `regra(categoria)` dá o limite (ou `None`
+  se a categoria não consta) e a `Origem(tipo, codigo)` daquela categoria. O
+  `tipo` é `PADRAO`, `CENTRO`, `HERDADA` ou `NAO_CADASTRADO`. Com o centro
+  cadastrado, `codigo` é `Centro.codigo` (grafia da chave do documento de
+  política). Sem cadastro, é o valor da entrada só com `strip()`, sem a
+  normalização da RN-002. O texto da origem sai de `justificativas.origem`
+  (DT-011). `Documento` ganha `centro_custo`, e na validação do documento de
+  despesas `centro_custo` presente e não texto vira erro geral. Ainda não é
+  usada pelo motor.
+  - **Atende:** RN-016, RN-002 (centro de custo), RN-013 (erro geral do centro de
+    custo), AMB-018, AMB-019, AMB-020, AMB-021, AMB-037, AMB-038, AMB-040,
+    plan DT-011
+  - **Aceite:** a seleção é conferida pelo `tipo`, pelo `codigo` e pelo limite;
+    o texto de cada origem é conferido em `justificativas.origem`.
+    Sem `centro_custo` ou `"  "` → padrão, origem "política padrão";
+    `CC-COMERCIAL`, ` cc-comercial ` e `Cc-Comercial` → tabela do
+    `CC-COMERCIAL`, origem "centro de custo CC-COMERCIAL" (grafia do documento
+    de política); `CC-SUPORTE-N2` → padrão, origem "política padrão; centro de
+    custo CC-SUPORTE-N2 não cadastrado"; `" CC-Suporte-N2 "` → padrão, origem
+    "política padrão; centro de custo CC-Suporte-N2 não cadastrado" (só as pontas
+    removidas, maiúsculas e minúsculas preservadas, e não `cc-suporte-n2`);
+    `CC-ADM` → `hospedagem` 250,00 herdada
+    da padrão, origem "centro de custo CC-ADM usando limite herdado da política
+    padrão", e `alimentacao` 45,00, origem "centro de custo CC-ADM"; `CC-ADM` →
+    `representacao`, ausente do centro e da padrão, origem "centro de custo CC-ADM";
+    `CC-ENG-PLATAFORMA` → `hospedagem` 0,00 (não herda, porque consta);
+    `CC-COMERCIAL` → `representacao` 300,00; padrão → sem `representacao`;
+    `"centro_custo": 42` → `EntradaInvalida`.
+  - **Teste:** `tests/test_rn016_politica_aplicavel.py` (seleção e
+    `justificativas.origem`),
+    `tests/test_rn013_dados_invalidos.py::test_rn013_erro_geral_*` (caso
+    `centro_custo` numérico)
+  - **Commit:**
+
+- [ ] **T-029** — Leitura e validação do documento de câmbio (`cambio.py` →
+  objeto `Cambio`), opcional. Quando informado, é sempre validado. Códigos de
+  moeda normalizados pela RN-017. Erro → `EntradaInvalida`. Ainda não é usado
+  pelo motor.
+  - **Atende:** RN-018 (documento de câmbio), RN-013 (erro geral), AMB-032
+  - **Aceite:** `cambio.json` → aceito, com 12 datas. Erro geral para: JSON
+    ilegível, `NaN`, `Infinity`; sem `moeda_base` ou sem `taxas`; `taxas` que não
+    é objeto; `moeda_base` diferente da da política; chave `2026-7-13` ou
+    `2026-02-30`; taxa `0`, `-5.42`, `"5,42"` ou `true`; `USD` e ` usd ` na mesma
+    data. Sem erro: `fonte` e `observacao` com qualquer valor; `" usd "` lido como
+    `USD`.
+  - **Teste:** `tests/test_rn018_cambio.py::test_rn018_documento_*`
+  - **Commit:**
+
+- [ ] **T-030** — Campo `moeda` da despesa: ausente → `BRL`; texto normalizado
+  (pontas e maiúsculas); vazio ou não texto → `DADOS_INVALIDOS` com `moeda` nulo.
+  Qualquer código não vazio é aceito. Revisa a T-007, onde `moeda` era ignorada.
+  - **Atende:** RN-017, RN-013 (erro em uma despesa), AMB-024
+  - **Aceite:** e-010 (sem `moeda`) → `BRL`; `" usd "` → `USD`; `"XYZ"` → aceito;
+    `""`, `"   "` e `840` → `DADOS_INVALIDOS` e as demais despesas seguem.
+    O teste da T-007 que tratava `"moeda": "USD"` como campo ignorado passa a
+    usar `"projeto": "X"`.
+  - **Teste:** `tests/test_rn017_moeda.py`,
+    `tests/test_rn013_dados_invalidos.py::test_rn013_despesa_campo_desconhecido_e_ignorado`
+  - **Commit:**
+
+### 7.2 — Regras com política externa e câmbio
+
+- [ ] **T-031** — Política externa no motor e na CLI:
+  `calcular(documento, politica, cambio=None, etapas=None)` monta um
+  `Contexto(documento, politica, cambio)` e o passa a todas as etapas no lugar
+  do `Documento` (troca mecânica de assinatura de todas as etapas, num único
+  commit). As etapas de nota fiscal e de limites passam a ler o limiar e os
+  limites da `PoliticaAplicavel`; `periodicidade` `dia` e `diaria` têm o mesmo
+  efeito. As constantes de `politica.py` saem. `tests/fabrica.py` ganha
+  `politica_aplicavel()`, que lê `politica-v4.json` e devolve a padrão por
+  padrão. A CLI ganha `--politica`, **não** marcado como obrigatório no
+  `argparse`: a falta dele é erro geral (código 1), assim como documento de
+  política inexistente, ilegível ou inválido. Até a T-038, CLI e testes de
+  exemplo usam a política padrão.
+  - **Atende:** RN-015, RN-007 (limiar do documento), RN-008 (limites do
+    documento), RN-013 (erro geral), AMB-031, AMB-036, plan DT-004, DT-006,
+    DT-009, DT-014
+  - **Aceite:** com a padrão da v4, toda a suíte da v3 passa (só as chamadas
+    mudam para informar a política e as etapas recebem `Contexto`). Política com
+    `alimentacao` 70,00 → duas despesas de 50,00 na mesma data → 50,00 + 20,00.
+    Limiar 150,00 → 120,00 sem nota passa. CLI sem `--politica` → código 1,
+    mensagem em stderr, arquivo de saída não criado e arquivo existente intacto
+    (não é código 2). `--politica` apontando para arquivo inexistente ou com
+    limite `-1` → código 1, arquivo de saída existente intacto.
+  - **Teste:** `tests/test_rn007_nota_fiscal.py::test_rn007_limiar_vem_do_documento`,
+    `tests/test_rn008_limites.py::test_rn008_limite_vem_do_documento`,
+    `::test_rn008_dia_e_diaria_sao_limite_por_data`,
+    `tests/test_motor.py::test_dt009_etapas_recebem_contexto`,
+    `tests/test_cli.py::test_rn015_sem_politica_retorna_1_e_nao_cria_saida`,
+    `::test_rn015_politica_inexistente_e_erro_geral`,
+    `::test_rn015_politica_invalida_nao_sobrescreve_saida`
+  - **Commit:**
+
+- [ ] **T-032** — Etapa de categoria pela política aplicável: reembolsável só se
+  consta da tabela efetiva com limite maior que zero; limite 0,00 →
+  `CATEGORIA_NAO_REEMBOLSAVEL`; `observacao` ignorada. A justificativa cita a
+  origem da categoria (T-028). Revisa a T-012.
+  - **Atende:** RN-001, RN-016, spec §4 (justificativa de categoria), AMB-014,
+    AMB-021, AMB-022, AMB-023, AMB-037, AMB-038, AMB-040
+  - **Aceite:** d-005 (`coworking`) → recusado, `CATEGORIA_NAO_REEMBOLSAVEL`.
+    `CC-ENG-PLATAFORMA`: d-010 (hospedagem) → recusado, `CATEGORIA_NAO_REEMBOLSAVEL`;
+    d-013 (hospedagem, 690,00, sem nota) → `CATEGORIA_NAO_REEMBOLSAVEL`, e não
+    `NOTA_FISCAL_AUSENTE`. Padrão: f-003 (`representacao`) → recusado.
+    `CC-COMERCIAL`: e-001 (`representacao`) → passa. `CC-ADM`: hospedagem →
+    passa (herança). Limite 0 em qualquer categoria de qualquer tabela → recusado.
+    A justificativa cita a RN-001 e a origem: d-010 → "centro de custo
+    CC-ENG-PLATAFORMA"; ` cc-eng-plataforma ` → "centro de custo
+    CC-ENG-PLATAFORMA"; f-003 → "política padrão; centro de custo CC-SUPORTE-N2
+    não cadastrado"; `" CC-Suporte-N2 "` com `representacao` → "política padrão;
+    centro de custo CC-Suporte-N2 não cadastrado"; `CC-ADM` com `representacao`
+    → "centro de custo CC-ADM";
+    política com `hospedagem` 0 na padrão e `CC-ADM` → "centro de custo CC-ADM
+    usando limite herdado da política padrão".
+  - **Teste:** `tests/test_rn001_categoria.py`
+  - **Commit:**
+
+- [ ] **T-033** — Etapa de limites pela tabela efetiva, incluindo
+  `representacao` como categoria independente, e justificativa de
+  `LIMITE_DIARIO` citando a origem do limite. O acréscimo em viagem do documento
+  não é aplicado. Revisa a T-015 e a T-016.
+  - **Atende:** RN-008, RN-009, RN-010, RN-011, RN-016, spec §4 (justificativa
+    de limite), AMB-008, AMB-021, AMB-023, AMB-035, AMB-036, AMB-037, AMB-038,
+    AMB-040
+  - **Aceite:** `CC-COMERCIAL`: e-007 (hospedagem, 1.200,00, "3 noites") →
+    400,00, `limitado`; e-001 (`representacao`, 340,00) → 300,00, `limitado`;
+    e-008 (alimentação, 95,00) → 90,00, `limitado`; alimentação e representação
+    na mesma data não dividem limite. `CC-ADM`: hospedagem 300,00 → 250,00,
+    `limitado`. `CC-ENG-PLATAFORMA`: d-001 + d-002 → 72,50 + 2,50. Padrão:
+    f-002 (310,00) → 250,00. `acrescimo_em_viagem_percentual` 50 → nenhum limite
+    acima da tabela. A justificativa cita o limite, o valor consumido, os `id`
+    que consumiram e a origem: `CC-ADM` com hospedagem 300,00 → "centro de custo
+    CC-ADM usando limite herdado da política padrão"; `CC-ADM` com alimentação
+    acima de 45,00 → "centro de custo CC-ADM"; ` cc-comercial ` com alimentação
+    de 95,00 → 90,00, `limitado`, citando "centro de custo CC-COMERCIAL"; f-002
+    → "política padrão; centro de custo CC-SUPORTE-N2 não cadastrado";
+    `" CC-Suporte-N2 "` com hospedagem de 310,00 → 250,00, `limitado`, citando
+    "política padrão; centro de custo CC-Suporte-N2 não cadastrado".
+  - **Teste:** `tests/test_rn008_limites.py`, `tests/test_rn009_distribuicao.py`,
+    `tests/test_rn010_parcial.py`, `tests/test_rn011_viagem.py`
+  - **Commit:**
+
+- [ ] **T-034** — Etapa de conversão (etapa 3 da §8, antes de valor negativo):
+  novo tipo de etapa `Conversao` em `motor.py`, primeiro item de `ETAPAS`, que
+  devolve a `Despesa` com `valor_considerado`, `taxa_cambio` e `data_cotacao`
+  preenchidos (ela substitui a da lista viva) ou uma recusa.
+  - **BRL:** `entrada.py` continua preenchendo `valor_considerado =
+    arredondar(valor_informado)`, como na v3; a etapa deixa passar sem consultar
+    o câmbio.
+  - **Outra moeda:** `entrada.py` deixa `valor_considerado = None`; a etapa
+    chama `Cambio.cotacao(moeda, data)`, que busca a maior data ≤ data da
+    despesa (`bisect_right`), e arredonda o produto uma única vez.
+  - Sem taxa, ou `cambio=None` → `COTACAO_INDISPONIVEL`, com `valor_considerado`
+    nulo e justificativa `justificativas.cotacao_indisponivel(moeda, data)`.
+
+  A linha da §7 "campo desconhecido" (que usava `moeda: USD`) passa a usar
+  `projeto`.
+  - **Atende:** RN-018, RN-003, RN-012, spec §8 (etapa 3), spec §4
+    (justificativa de cotação), AMB-025, AMB-026, AMB-027, AMB-029, plan DT-010
+  - **Aceite:** e-002 (22,00 EUR, 2026-07-14) → taxa 5,93, `data_cotacao`
+    2026-07-14, 130,46. e-004 (30,00 EUR, sábado 2026-07-18) → taxa 5,96 de
+    2026-07-17, 178,80. f-004 (12,00 USD, 2026-07-21) → 65,76. 33,333 USD em
+    2026-07-13 → 180,66. e-006 (55,00 GBP) → recusado, `COTACAO_INDISPONIVEL`,
+    `valor_considerado` nulo, justificativa citando `GBP` e a data. USD em
+    2026-07-10 → `COTACAO_INDISPONIVEL`. USD sem câmbio → `COTACAO_INDISPONIVEL`
+    e as despesas em BRL seguem. BRL em sábado → sem taxa, processada.
+    −10,00 GBP → `COTACAO_INDISPONIVEL`; −10,00 USD em 2026-07-13 → −54,20,
+    `VALOR_NEGATIVO`. USD sem cotação e fora do período → `COTACAO_INDISPONIVEL`.
+    Despesa BRL construída pela entrada chega à etapa 4 com o mesmo
+    `valor_considerado` da v3; nenhuma despesa chega à etapa 4 com
+    `valor_considerado` nulo.
+  - **Teste:** `tests/test_rn018_cambio.py::test_rn018_conversao_*`,
+    `::test_rn018_cotacao_usa_data_anterior_mais_proxima`,
+    `tests/test_motor.py::test_dt010_conversao_e_a_primeira_etapa`,
+    `tests/test_rn003_arredondamento.py::test_rn003_arredonda_uma_vez_depois_da_conversao`,
+    `tests/test_secao7_casos_de_borda.py` (linha "Campo desconhecido")
+  - **Commit:**
+
+- [ ] **T-035** — Nota fiscal comparada com o valor convertido para reais
+  (`test(T-035)`; a T-034 já entrega `valor_considerado` em reais).
+  - **Atende:** RN-007, AMB-028
+  - **Aceite:** e-005 (40,00 USD × 5,50 = 220,00, sem nota) → recusado,
+    `NOTA_FISCAL_AUSENTE`. e-003 (14,50 EUR × 5,88 = 85,26, sem nota) → passa.
+    20,00 USD (abaixo de 100 na moeda original, acima em reais), sem nota →
+    recusado.
+  - **Teste:** `tests/test_rn007_nota_fiscal.py::test_rn007_compara_valor_convertido_*`
+  - **Commit:**
+
+- [ ] **T-036** — Duplicatas exigem a mesma moeda e o mesmo valor informado
+  arredondado para centavos na moeda original (em `BRL`, o próprio
+  `valor_considerado`). Despesas recusadas por `COTACAO_INDISPONIVEL` não entram
+  no grupo. Revisa a T-013.
+  - **Atende:** RN-006, AMB-010, AMB-030
+  - **Aceite:** duas despesas de 22,00 EUR, mesmas data, categoria e fornecedor
+    → a segunda é `DUPLICATA`, citando a primeira. 22,00 EUR e 130,46 BRL → não
+    são duplicatas. 22,00 EUR e 22,00 USD → não são duplicatas. 22,004 EUR e
+    22,00 EUR → duplicatas. Duas GBP iguais → ambas `COTACAO_INDISPONIVEL`,
+    nenhuma `DUPLICATA`.
+  - **Teste:** `tests/test_rn006_duplicatas.py`
+  - **Commit:**
+
+- [ ] **T-037** — Saída com os campos novos, na ordem da §4: `moeda`,
+  `taxa_cambio` (como está no documento, sem quantizar) e `data_cotacao`
+  (`AAAA-MM-DD`); `valor_considerado` nulo também em `COTACAO_INDISPONIVEL`;
+  `moeda` nula em `DADOS_INVALIDOS`. Revisa a T-018.
+  - **Atende:** spec §4 (saída), RN-003, RN-017, RN-018, AMB-033, DT-005
+  - **Aceite:** item em BRL → `"moeda": "BRL"`, `taxa_cambio` e `data_cotacao`
+    `null`. e-002 → `"taxa_cambio": 5.93`, `"data_cotacao": "2026-07-14"`,
+    `"valor_considerado": 130.46`, `"valor_informado": 22.00`. e-006 →
+    `"moeda": "GBP"`, `valor_considerado`, `taxa_cambio` e `data_cotacao` `null`.
+    `DADOS_INVALIDOS` → `moeda` `null`. Campos do item na ordem da tabela da §4.
+  - **Teste:** `tests/test_saida_serializacao.py::test_dt005_campos_do_item_na_ordem_da_spec`,
+    `::test_dt005_moeda_e_cotacao_em_brl`, `::test_dt005_taxa_cambio_sem_quantizar`,
+    `::test_dt005_nulos_em_cotacao_indisponivel`, `::test_dt005_nulos_em_dados_invalidos`
+  - **Commit:**
+
+### 7.3 — Integração, aceite e rastreabilidade
+
+- [ ] **T-038** — Fluxo real completo: a CLI ganha `--cambio` (opcional) e passa
+  a escolher a política pelo `colaborador.centro_custo` (T-028). Ordem de
+  leitura: despesas, política, câmbio (o câmbio compara `moeda_base` com a
+  política). Sem `--cambio`, o motor recebe `cambio=None`. No mesmo
+  commit, atualiza os testes da v3 cujo resultado muda com o
+  `CC-ENG-PLATAFORMA`: tabela da §9 (total 585,43 → 351,43), justificativas
+  exatas da §4 (Exemplo 1) e as linhas da §7 reescritas pela spec 2.0. Atualiza
+  o comando de execução no README e no `CLAUDE.md`. Revisa as T-019, T-020,
+  T-021, T-022 e T-025.
+  - **Atende:** RN-016, RN-018 (câmbio opcional), RN-013 (erro geral dos
+    documentos), spec §4 (Exemplo 1), spec §8 (validação antes das etapas),
+    spec §9 (exemplo original), plan DT-006
+  - **Aceite:** `exemplos/despesas-exemplo.json` + `politica-v4.json`, sem
+    câmbio → as 14 linhas da §9 e total 351,43; d-001, d-002 e d-004 com
+    exatamente as justificativas do Exemplo 1 da §4. Sem `centro_custo` →
+    padrão. `"centro_custo": 42`, `--cambio` para arquivo inexistente, câmbio
+    com taxa 0 ou câmbio com `moeda_base` diferente → código 1, arquivo de
+    saída existente intacto. Despesa em USD sem `--cambio` →
+    `COTACAO_INDISPONIVEL` e código 0. Argumento desconhecido ou `--input`
+    ausente → código 2. Linhas da §7
+    reescritas ("Duas despesas no mesmo dia...", "Hospedagem com várias
+    diárias", "Duas hospedagens na mesma data", "Hospedagem sem nota acima de
+    100", "Categoria em maiúsculas", "Campo desconhecido") batem com a spec 2.0.
+  - **Teste:** `tests/test_secao9_aceite_exemplo.py`,
+    `tests/test_secao7_casos_de_borda.py` (linhas reescritas),
+    `tests/test_cli.py::test_cli_exemplo_gera_arquivo`,
+    `::test_rn016_centro_custo_invalido_e_erro_geral`,
+    `::test_rn018_cambio_invalido_nao_sobrescreve_saida`,
+    `::test_rn018_moedas_base_divergentes_e_erro_geral`,
+    `::test_rn018_sem_cambio_despesa_estrangeira_cotacao_indisponivel`,
+    `::test_dt006_argumentos_invalidos_retornam_2` (com `--input` ausente e
+    argumento desconhecido)
+  - **Commit:**
+
+- [ ] **T-039** — Casos novos da §7 da spec 2.1 na tabela parametrizada, com o
+  nome do caso como `id` (`test(T-039)`).
+  - **Atende:** spec §7 (casos de RN-001, RN-006, RN-007, RN-013, RN-015 a
+    RN-018 e seção 8 incluídos nas specs 2.0 e 2.1), AMB-037, AMB-038, AMB-039,
+    AMB-040
+  - **Aceite:** os 71 casos da §7 passam e aparecem no relatório do pytest com o
+    nome da spec; o teste de contagem passa de 37 para 71. Inclui "Grafia do
+    centro de custo na justificativa", "Periodicidade com grafia diferente",
+    "Centro de custo desconhecido com espaços nas pontas" (`" CC-Suporte-N2 "`
+    → justificativa com "CC-Suporte-N2") e a justificativa de herança em
+    "Categoria ausente na tabela do centro".
+  - **Teste:** `tests/test_secao7_casos_de_borda.py::test_secao7_caso_de_borda`,
+    `::test_secao7_tem_71_casos`
+  - **Commit:**
+
+- [ ] **T-040** — Aceite dos dois documentos do envelope pela CLI, com
+  `politica-v4.json` e `cambio.json` (`test(T-040)`).
+  - **Atende:** spec §9 (envelope), spec §4 (Exemplo 2), RN-014, RN-016,
+    AMB-019, AMB-038
+  - **Aceite:** `despesas-envelope.json` → as 10 linhas da §9
+    (`valor_considerado`, `valor_reembolsavel`, `status`, `motivo`) e total
+    1.143,26; e-002 com exatamente a justificativa do Exemplo 2 da §4; as
+    justificativas de `LIMITE_DIARIO` e `CATEGORIA_NAO_REEMBOLSAVEL` citam
+    "centro de custo CC-COMERCIAL", sem herança (todas as categorias reembolsadas
+    do documento constam do centro).
+    `despesas-envelope-cc-desconhecido.json` → as 4 linhas e total 373,76; as
+    justificativas de f-002 e f-003 citam "política padrão; centro de custo
+    CC-SUPORTE-N2 não cadastrado". Nos dois: um item por despesa, na ordem;
+    todo item cita `RN-\d{3}`; duas execuções idênticas byte a byte; trocar as
+    descrições não altera `valor_reembolsavel`, `status` nem `motivo`.
+  - **Teste:** `tests/test_secao9_aceite_envelope.py`
+  - **Commit:**
+
+- [ ] **T-041** — Rastreabilidade: o teste exige `test_rnNNN_*.py` de RN-001 a
+  RN-018; a tabela de Cobertura deste arquivo ganha RN-015 a RN-018, AMB-018 a
+  AMB-036 e as tasks da Fase 7 nas linhas revistas. Fica por último porque só
+  passa quando RN-015 a RN-018 têm teste.
+  - **Atende:** plan §6, D-002 (rastreabilidade)
+  - **Aceite:** a `spec.md` 2.0 tem RN-001 a RN-018 e todas têm arquivo de
+    teste; remover `test_rn018_cambio.py` faz o teste falhar; toda RN e toda AMB
+    da spec aparecem na Cobertura com task e teste.
+  - **Teste:** `tests/test_rastreabilidade.py::test_rastreabilidade_spec_tem_rn001_a_rn018`,
+    `::test_rastreabilidade_toda_rn_tem_arquivo_de_teste`
+  - **Commit:**
 
 ---
 
