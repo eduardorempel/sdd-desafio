@@ -1,11 +1,11 @@
 from decimal import Decimal
 
-from fabrica import despesa, documento, invalida, politica_aplicavel
+from fabrica import cambio, despesa, documento, invalida, politica_aplicavel
 
 from reembolso.etapas import Contexto
 from reembolso.justificativas import reais
 from reembolso.modelo import Corte, Motivo, Recusa, Status
-from reembolso.motor import EmGrupo, PorItem, calcular
+from reembolso.motor import ETAPAS, Conversao, EmGrupo, PorItem, calcular
 
 
 def _recusa_posicao(posicao):
@@ -143,3 +143,25 @@ def test_dt009_etapas_recebem_contexto():
     assert all(ctx.documento is doc for ctx in recebidos)
     assert all(ctx.politica is politica for ctx in recebidos)
     assert all(ctx.cambio is None for ctx in recebidos)
+
+
+def test_dt010_conversao_e_a_primeira_etapa():
+    assert isinstance(ETAPAS[0], Conversao)
+    assert not any(isinstance(etapa, Conversao) for etapa in ETAPAS[1:])
+
+
+def test_dt010_nenhuma_despesa_chega_a_etapa_4_sem_valor_considerado():
+    vistas = []
+    calcular(
+        documento(
+            despesa(1, data="2026-07-14", valor="22.00", moeda="EUR"),
+            despesa(2, data="2026-07-21", valor="55.00", moeda="GBP"),
+            despesa(3, data="2026-07-18", valor="47.20"),
+        ),
+        politica_aplicavel(),
+        cambio(),
+        etapas=[ETAPAS[0], EmGrupo(lambda vivas, _ctx: vistas.extend(vivas) or {})],
+    )
+    assert [d.posicao for d in vistas] == [1, 3]
+    assert all(d.valor_considerado is not None for d in vistas)
+    assert vistas[0].valor_considerado == Decimal("130.46")

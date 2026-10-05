@@ -468,7 +468,7 @@ Com a T-031, as constantes de `politica.py` deixam de existir (fim da regra
     `tests/test_rn010_parcial.py`, `tests/test_rn011_viagem.py`
   - **Commit:**
 
-- [ ] **T-034** — Etapa de conversão (etapa 3 da §8, antes de valor negativo):
+- [x] **T-034** — Etapa de conversão (etapa 3 da §8, antes de valor negativo):
   novo tipo de etapa `Conversao` em `motor.py`, primeiro item de `ETAPAS`, que
   devolve a `Despesa` com `valor_considerado`, `taxa_cambio` e `data_cotacao`
   preenchidos (ela substitui a da lista viva) ou uma recusa.

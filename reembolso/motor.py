@@ -40,10 +40,19 @@ class EmGrupo:
     regra: Callable[[list[Despesa], Contexto], dict[int, Recusa | Corte]]
 
 
-Etapa = PorItem | EmGrupo
+@dataclass(frozen=True)
+class Conversao:
+    """Etapa que devolve, por despesa, a `Despesa` convertida (que substitui a da lista viva)
+    ou uma `Recusa` (DT-010)."""
+
+    regra: Callable[[Despesa, Contexto], Despesa | Recusa]
+
+
+Etapa = Conversao | PorItem | EmGrupo
 
 # Ordem das etapas da spec §8. As etapas 1 e 2 acontecem em entrada.py.
 ETAPAS: list[Etapa] = [
+    Conversao(regras.conversao),  # RN-018, RN-003 → COTACAO_INDISPONIVEL
     PorItem(regras.valor_negativo),  # RN-005 → VALOR_NEGATIVO
     PorItem(regras.periodo),  # RN-004 → FORA_DO_PERIODO
     PorItem(regras.categoria),  # RN-001 → CATEGORIA_NAO_REEMBOLSAVEL
@@ -54,6 +63,8 @@ ETAPAS: list[Etapa] = [
 
 
 def _decisoes(etapa: Etapa, vivas: list[Despesa], contexto: Contexto) -> dict:
+    if isinstance(etapa, Conversao):
+        return {d.posicao: etapa.regra(d, contexto) for d in vivas}
     if isinstance(etapa, PorItem):
         decisoes = {d.posicao: etapa.regra(d, contexto) for d in vivas}
         return {posicao: r for posicao, r in decisoes.items() if r is not None}
@@ -70,6 +81,8 @@ def _recusado(despesa: Despesa | Invalida, recusa: Recusa) -> Resultado:
         motivo=recusa.motivo,
         justificativa=recusa.justificativa,
         moeda=getattr(despesa, "moeda", None),  # nula em DADOS_INVALIDOS (RN-013)
+        taxa_cambio=getattr(despesa, "taxa_cambio", None),
+        data_cotacao=getattr(despesa, "data_cotacao", None),
     )
 
 
@@ -90,6 +103,8 @@ def _final(despesa: Despesa, corte: Corte | None) -> Resultado:
         motivo=motivo,
         justificativa=texto,
         moeda=despesa.moeda,
+        taxa_cambio=despesa.taxa_cambio,
+        data_cotacao=despesa.data_cotacao,
     )
 
 
@@ -121,9 +136,11 @@ def calcular(
         for posicao, decisao in _decisoes(etapa, vivas, contexto).items():
             if isinstance(decisao, Recusa):
                 resultados[posicao] = _recusado(por_posicao[posicao], decisao)
+            elif isinstance(decisao, Despesa):
+                por_posicao[posicao] = decisao
             else:
                 cortes[posicao] = decisao
-        vivas = [d for d in vivas if d.posicao not in resultados]
+        vivas = [por_posicao[d.posicao] for d in vivas if d.posicao not in resultados]
 
     for despesa in vivas:
         resultados[despesa.posicao] = _final(despesa, cortes.get(despesa.posicao))

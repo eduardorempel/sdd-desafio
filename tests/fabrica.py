@@ -5,7 +5,7 @@ from datetime import date
 from decimal import Decimal
 from pathlib import Path
 
-from reembolso.cambio import Cambio
+from reembolso.cambio import Cambio, ler_cambio
 from reembolso.etapas import Contexto
 from reembolso.modelo import Despesa, Documento, Invalida
 from reembolso.normalizacao import arredondar, normalizar_texto
@@ -13,6 +13,7 @@ from reembolso.politica import PoliticaAplicavel, ler_politica
 from reembolso.politica import politica_aplicavel as _politica_aplicavel
 
 POLITICA_V4 = Path(__file__).parent.parent / "exemplos" / "envelope" / "politica-v4.json"
+CAMBIO = Path(__file__).parent.parent / "exemplos" / "envelope" / "cambio.json"
 
 
 def despesa(
@@ -24,8 +25,12 @@ def despesa(
     fornecedor: str | None = None,
     valor: str = "10.00",
     tem_nota_fiscal: bool = True,
+    moeda: str = "BRL",
 ) -> Despesa:
-    """Despesa válida. Por padrão, cada posição tem `id` e fornecedor próprios."""
+    """Despesa válida. Por padrão, cada posição tem `id` e fornecedor próprios.
+
+    Fora de BRL, `valor_considerado` fica nulo até a etapa de conversão (DT-010).
+    """
     id = id or f"d-{posicao:03d}"
     return Despesa(
         posicao=posicao,
@@ -35,7 +40,8 @@ def despesa(
         fornecedor=normalizar_texto(fornecedor or f"Fornecedor {id}"),
         tem_nota_fiscal=tem_nota_fiscal,
         valor_informado=Decimal(valor),
-        valor_considerado=arredondar(Decimal(valor)),
+        valor_considerado=arredondar(Decimal(valor)) if moeda == "BRL" else None,
+        moeda=moeda,
     )
 
 
@@ -76,3 +82,8 @@ def contexto(
 ) -> Contexto:
     """Contexto para chamar uma etapa diretamente (DT-009)."""
     return Contexto(doc or documento(), politica or politica_aplicavel(), cambio)
+
+
+def cambio() -> Cambio:
+    """`exemplos/envelope/cambio.json`, validado contra a moeda base BRL."""
+    return ler_cambio(CAMBIO.read_text(encoding="utf-8"), "BRL")

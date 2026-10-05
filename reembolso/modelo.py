@@ -5,6 +5,8 @@ from datetime import date
 from decimal import Decimal
 from enum import StrEnum
 
+MOEDA_BASE = "BRL"  # moeda dos limites e de `valor_considerado` (RN-015, RN-018)
+
 
 class Status(StrEnum):
     """Status de um item da saída (spec §4)."""
@@ -41,8 +43,8 @@ class Despesa:
     fornecedor: str
     tem_nota_fiscal: bool
     valor_informado: Decimal
-    valor_considerado: Decimal
-    moeda: str = "BRL"  # normalizada (RN-017)
+    valor_considerado: Decimal | None  # None até a etapa 3 em moeda estrangeira (DT-010)
+    moeda: str = MOEDA_BASE  # normalizada (RN-017)
     taxa_cambio: Decimal | None = None  # como está no documento de câmbio; None em BRL
     data_cotacao: date | None = None  # data da taxa usada; None em BRL
 

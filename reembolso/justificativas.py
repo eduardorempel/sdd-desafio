@@ -36,6 +36,11 @@ def dados_invalidos(detalhe: str) -> str:
     return f"Dados inválidos: {detalhe} (RN-013)."
 
 
+def cotacao_indisponivel(moeda: str, data: date) -> str:
+    """Cita a moeda e a data da despesa (spec §4)."""
+    return f"Sem cotação de {moeda} em {data} nem em data anterior (RN-018)."
+
+
 def valor_negativo(valor: Decimal) -> str:
     return (
         f"Valor negativo ({reais(valor)}) não é reembolsável e não abate outras despesas (RN-005)."

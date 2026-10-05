@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from datetime import date
 from decimal import Decimal
 
-from reembolso.modelo import Despesa, Documento, Invalida
+from reembolso.modelo import MOEDA_BASE, Despesa, Documento, Invalida
 from reembolso.normalizacao import arredondar, normalizar_moeda, normalizar_texto
 
 _FORMATO_DATA = re.compile(r"[0-9]{4}-[0-9]{2}-[0-9]{2}")
@@ -165,6 +165,10 @@ def ler_despesa(item: dict, posicao: int) -> Despesa | Invalida:
     if invalida is not None:
         return invalida
     valor_informado = numero(item["valor"])
+    moeda = normalizar_moeda(item.get("moeda", MOEDA_BASE))
+    # Em BRL a conversão é a identidade (RN-003); as demais moedas são convertidas na
+    # etapa 3, que preenche `valor_considerado` (DT-010).
+    considerado = arredondar(valor_informado) if moeda == MOEDA_BASE else None
     return Despesa(
         posicao=posicao,
         id=item["id"],
@@ -173,8 +177,8 @@ def ler_despesa(item: dict, posicao: int) -> Despesa | Invalida:
         fornecedor=normalizar_texto(item["fornecedor"]),
         tem_nota_fiscal=item["tem_nota_fiscal"],
         valor_informado=valor_informado,
-        valor_considerado=arredondar(valor_informado),
-        moeda=normalizar_moeda(item.get("moeda", "BRL")),
+        valor_considerado=considerado,
+        moeda=moeda,
     )
 
 

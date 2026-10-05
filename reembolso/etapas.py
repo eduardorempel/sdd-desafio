@@ -1,12 +1,13 @@
 """Uma função por etapa da seção 8 da spec."""
 
 from collections import defaultdict
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from decimal import Decimal
 
 from reembolso import justificativas
 from reembolso.cambio import Cambio
-from reembolso.modelo import Corte, Despesa, Documento, Motivo, Recusa
+from reembolso.modelo import MOEDA_BASE, Corte, Despesa, Documento, Motivo, Recusa
+from reembolso.normalizacao import arredondar
 from reembolso.politica import PoliticaAplicavel
 
 
@@ -17,6 +18,32 @@ class Contexto:
     documento: Documento
     politica: PoliticaAplicavel
     cambio: Cambio | None = None
+
+
+def conversao(despesa: Despesa, contexto: Contexto) -> Despesa | Recusa:
+    """RN-018, RN-003: converte para reais pela taxa da data da despesa ou da anterior mais
+    próxima e arredonda o produto uma única vez.
+
+    Em BRL a despesa passa sem consultar o câmbio. Sem taxa, ou sem documento de câmbio,
+    é recusada com `COTACAO_INDISPONIVEL` e `valor_considerado` fica nulo.
+    """
+    if despesa.moeda == MOEDA_BASE:
+        return despesa
+    cotacao = (
+        None if contexto.cambio is None else contexto.cambio.cotacao(despesa.moeda, despesa.data)
+    )
+    if cotacao is None:
+        return Recusa(
+            Motivo.COTACAO_INDISPONIVEL,
+            justificativas.cotacao_indisponivel(despesa.moeda, despesa.data),
+        )
+    taxa, data_cotacao = cotacao
+    return replace(
+        despesa,
+        valor_considerado=arredondar(despesa.valor_informado * taxa),
+        taxa_cambio=taxa,
+        data_cotacao=data_cotacao,
+    )
 
 
 def valor_negativo(despesa: Despesa, _contexto: Contexto) -> Recusa | None:

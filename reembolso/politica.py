@@ -8,9 +8,9 @@ from decimal import Decimal
 from enum import Enum
 
 from reembolso.entrada import EntradaInvalida, ler_json, numero, texto_preenchido
+from reembolso.modelo import MOEDA_BASE
 from reembolso.normalizacao import normalizar_moeda, normalizar_texto
 
-MOEDA_BASE = "BRL"
 PERIODICIDADES = frozenset({"dia", "diaria"})
 
 

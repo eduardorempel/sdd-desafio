@@ -1,5 +1,6 @@
 """Documento de câmbio (RN-018)."""
 
+from bisect import bisect_right
 from dataclasses import dataclass
 from datetime import date
 from decimal import Decimal
@@ -14,6 +15,18 @@ class Cambio:
 
     moeda_base: str
     taxas: dict[str, list[tuple[date, Decimal]]]  # moeda → (data, taxa), ordenado por data
+
+    def cotacao(self, moeda: str, data: date) -> tuple[Decimal, date] | None:
+        """Taxa da moeda na data ou, sem ela, na data anterior mais próxima (RN-018).
+
+        `None` se não houver taxa dessa moeda nem na data nem antes dela.
+        """
+        lista = self.taxas.get(moeda, [])
+        indice = bisect_right([d for d, _ in lista], data)
+        if indice == 0:
+            return None
+        data_cotacao, taxa = lista[indice - 1]
+        return taxa, data_cotacao
 
 
 def _erro(mensagem: str) -> EntradaInvalida:

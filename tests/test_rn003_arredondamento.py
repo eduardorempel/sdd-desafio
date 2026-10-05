@@ -1,7 +1,9 @@
 from decimal import Decimal
 
 import pytest
+from fabrica import cambio, contexto, despesa
 
+from reembolso.etapas import conversao
 from reembolso.normalizacao import arredondar
 
 
@@ -41,3 +43,12 @@ def test_rn003_negativo_que_arredonda_a_zero_vira_zero_sem_sinal():
 
 def test_rn003_valor_muito_grande_nao_falha():
     assert arredondar(Decimal("1E+40")) == Decimal("1E+40")
+
+
+def test_rn003_arredonda_uma_vez_depois_da_conversao():
+    d = despesa(1, data="2026-07-13", valor="33.333", moeda="USD")
+    convertida = conversao(d, contexto(cambio=cambio()))
+    assert convertida.valor_considerado == Decimal("180.66")
+    assert convertida.valor_considerado != arredondar(
+        arredondar(Decimal("33.333")) * Decimal("5.42")
+    )

@@ -242,7 +242,7 @@ CASOS = [
         id="Valor válido e outro campo inválido",
     ),
     pytest.param(
-        doc(d("d-x", moeda="USD")),
+        doc(d("d-x", projeto="X")),
         [aprovado("10.00")],
         id="Campo desconhecido",
     ),
