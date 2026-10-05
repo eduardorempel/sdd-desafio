@@ -245,7 +245,7 @@ def test_rn013_despesa_detalhe_cita_o_campo():
 
 
 def test_rn013_despesa_campo_desconhecido_e_ignorado():
-    assert validar_despesa(_despesa(moeda="USD"), posicao=1) is None
+    assert validar_despesa(_despesa(projeto="X"), posicao=1) is None
 
 
 def test_rn013_despesa_descricao_malformada_e_ignorada():

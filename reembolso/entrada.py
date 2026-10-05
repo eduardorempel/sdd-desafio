@@ -7,7 +7,7 @@ from datetime import date
 from decimal import Decimal
 
 from reembolso.modelo import Despesa, Documento, Invalida
-from reembolso.normalizacao import arredondar, normalizar_texto
+from reembolso.normalizacao import arredondar, normalizar_moeda, normalizar_texto
 
 _FORMATO_DATA = re.compile(r"[0-9]{4}-[0-9]{2}-[0-9]{2}")
 
@@ -136,13 +136,16 @@ def _problemas(item: dict) -> list[str]:
         problemas.append("tem_nota_fiscal ausente")
     elif not isinstance(item["tem_nota_fiscal"], bool):
         problemas.append("tem_nota_fiscal não é verdadeiro/falso")
+    if "moeda" in item:
+        problemas.append(_problema_texto(item, "moeda"))
     return [p for p in problemas if p is not None]
 
 
 def validar_despesa(item: dict, posicao: int) -> Invalida | None:
     """Devolve `Invalida` se a despesa tiver erro da RN-013, ou `None` se for válida.
 
-    Campos informativos (`descricao`) e desconhecidos não são lidos.
+    `moeda` é opcional; presente, deve ser texto não vazio (RN-017). Campos informativos
+    (`descricao`) e desconhecidos não são lidos.
     """
     problemas = _problemas(item)
     if not problemas:
@@ -156,7 +159,8 @@ def validar_despesa(item: dict, posicao: int) -> Invalida | None:
 
 
 def ler_despesa(item: dict, posicao: int) -> Despesa | Invalida:
-    """Etapas 1 e 2 da spec §8: valida (RN-013), normaliza (RN-002) e arredonda (RN-003)."""
+    """Etapas 1 e 2 da spec §8: valida (RN-013, RN-017), normaliza (RN-002, RN-017) e
+    arredonda (RN-003). Sem `moeda`, a moeda é `BRL` (RN-017)."""
     invalida = validar_despesa(item, posicao)
     if invalida is not None:
         return invalida
@@ -170,6 +174,7 @@ def ler_despesa(item: dict, posicao: int) -> Despesa | Invalida:
         tem_nota_fiscal=item["tem_nota_fiscal"],
         valor_informado=valor_informado,
         valor_considerado=arredondar(valor_informado),
+        moeda=normalizar_moeda(item.get("moeda", "BRL")),
     )
 
 

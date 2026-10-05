@@ -66,6 +66,7 @@ def _recusado(despesa: Despesa | Invalida, recusa: Recusa) -> Resultado:
         status=Status.RECUSADO,
         motivo=recusa.motivo,
         justificativa=recusa.justificativa,
+        moeda=getattr(despesa, "moeda", None),  # nula em DADOS_INVALIDOS (RN-013)
     )
 
 
@@ -85,6 +86,7 @@ def _final(despesa: Despesa, corte: Corte | None) -> Resultado:
         status=status,
         motivo=motivo,
         justificativa=texto,
+        moeda=despesa.moeda,
     )
 
 

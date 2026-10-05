@@ -375,7 +375,7 @@ Com a T-031, as constantes de `politica.py` deixam de existir (fim da regra
   - **Teste:** `tests/test_rn018_cambio.py::test_rn018_documento_*`
   - **Commit:**
 
-- [ ] **T-030** — Campo `moeda` da despesa: ausente → `BRL`; texto normalizado
+- [x] **T-030** — Campo `moeda` da despesa: ausente → `BRL`; texto normalizado
   (pontas e maiúsculas); vazio ou não texto → `DADOS_INVALIDOS` com `moeda` nulo.
   Qualquer código não vazio é aceito. Revisa a T-007, onde `moeda` era ignorada.
   - **Atende:** RN-017, RN-013 (erro em uma despesa), AMB-024
