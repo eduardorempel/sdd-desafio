@@ -45,8 +45,12 @@ def fora_do_periodo(data: date, inicio: date, fim: date) -> str:
     return f"Data {data} fora do período de {inicio} a {fim} (RN-004)."
 
 
-def categoria_nao_reembolsavel(categoria: str) -> str:
-    return f"Categoria '{categoria}' não é reembolsável pela política (RN-001)."
+def categoria_nao_reembolsavel(categoria: str, politica: Origem) -> str:
+    """Cita a política aplicada (spec §4, RN-016)."""
+    return (
+        f"Categoria '{categoria}' não é reembolsável pela política aplicada "
+        f"({origem(politica)}) (RN-001, RN-016)."
+    )
 
 
 def duplicata(id_mantida: str) -> str:

@@ -420,7 +420,7 @@ Com a T-031, as constantes de `politica.py` deixam de existir (fim da regra
     `::test_rn015_politica_invalida_nao_sobrescreve_saida`
   - **Commit:**
 
-- [ ] **T-032** — Etapa de categoria pela política aplicável: reembolsável só se
+- [x] **T-032** — Etapa de categoria pela política aplicável: reembolsável só se
   consta da tabela efetiva com limite maior que zero; limite 0,00 →
   `CATEGORIA_NAO_REEMBOLSAVEL`; `observacao` ignorada. A justificativa cita a
   origem da categoria (T-028). Revisa a T-012.

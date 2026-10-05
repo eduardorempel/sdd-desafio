@@ -40,13 +40,17 @@ def periodo(despesa: Despesa, contexto: Contexto) -> Recusa | None:
 
 
 def categoria(despesa: Despesa, contexto: Contexto) -> Recusa | None:
-    """RN-001: só categorias que constam da política aplicável, comparadas após normalização."""
-    limite, _origem = contexto.politica.regra(despesa.categoria)
-    if limite is not None:
+    """RN-001, RN-016: reembolsável só se consta da política aplicável com limite maior que zero.
+
+    Comparada após normalização (RN-002); limite 0 é "não reembolsável" (AMB-022), e o texto
+    de `observacao` não é usado.
+    """
+    limite, origem = contexto.politica.regra(despesa.categoria)
+    if limite is not None and limite > 0:
         return None
     return Recusa(
         Motivo.CATEGORIA_NAO_REEMBOLSAVEL,
-        justificativas.categoria_nao_reembolsavel(despesa.categoria),
+        justificativas.categoria_nao_reembolsavel(despesa.categoria, origem),
     )
 
 
