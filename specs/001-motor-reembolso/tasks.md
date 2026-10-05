@@ -301,7 +301,7 @@ Com a T-031, as constantes de `politica.py` deixam de existir (fim da regra
     `COTACAO_INDISPONIVEL` existe; a suíte da v3 continua passando sem alteração.
   - **Teste:** `tests/test_modelo.py::test_motivos_iguais_aos_codigos_da_spec`
     (atualizado para oito motivos)
-  - **Commit:**
+  - **Commit:** 18b151f
 
 - [x] **T-027** — Leitura e validação do documento de política (`politica.py`
   passa a ler `politica-v4.json` e devolver um objeto `Politica`). Chaves de
@@ -324,7 +324,7 @@ Com a T-031, as constantes de `politica.py` deixam de existir (fim da regra
     `"acrescimo_em_viagem_percentual": "x"`,
     `versao`, `vigencia` e `observacao` com qualquer valor.
   - **Teste:** `tests/test_rn015_politica.py`
-  - **Commit:**
+  - **Commit:** 0726363
 
 - [x] **T-028** — Política aplicável: `politica_aplicavel(politica, centro_custo)`
   devolve uma `PoliticaAplicavel` cujo `regra(categoria)` dá o limite (ou `None`
@@ -359,7 +359,7 @@ Com a T-031, as constantes de `politica.py` deixam de existir (fim da regra
     `justificativas.origem`),
     `tests/test_rn013_dados_invalidos.py::test_rn013_erro_geral_*` (caso
     `centro_custo` numérico)
-  - **Commit:**
+  - **Commit:** f185c37
 
 - [x] **T-029** — Leitura e validação do documento de câmbio (`cambio.py` →
   objeto `Cambio`), opcional. Quando informado, é sempre validado. Códigos de
@@ -373,7 +373,7 @@ Com a T-031, as constantes de `politica.py` deixam de existir (fim da regra
     data. Sem erro: `fonte` e `observacao` com qualquer valor; `" usd "` lido como
     `USD`.
   - **Teste:** `tests/test_rn018_cambio.py::test_rn018_documento_*`
-  - **Commit:**
+  - **Commit:** 3acc4e8
 
 - [x] **T-030** — Campo `moeda` da despesa: ausente → `BRL`; texto normalizado
   (pontas e maiúsculas); vazio ou não texto → `DADOS_INVALIDOS` com `moeda` nulo.
@@ -385,7 +385,7 @@ Com a T-031, as constantes de `politica.py` deixam de existir (fim da regra
     usar `"projeto": "X"`.
   - **Teste:** `tests/test_rn017_moeda.py`,
     `tests/test_rn013_dados_invalidos.py::test_rn013_despesa_campo_desconhecido_e_ignorado`
-  - **Commit:**
+  - **Commit:** f0a2bcf
 
 ### 7.2 — Regras com política externa e câmbio
 
@@ -418,7 +418,7 @@ Com a T-031, as constantes de `politica.py` deixam de existir (fim da regra
     `tests/test_cli.py::test_rn015_sem_politica_retorna_1_e_nao_cria_saida`,
     `::test_rn015_politica_inexistente_e_erro_geral`,
     `::test_rn015_politica_invalida_nao_sobrescreve_saida`
-  - **Commit:**
+  - **Commit:** 0bea107
 
 - [x] **T-032** — Etapa de categoria pela política aplicável: reembolsável só se
   consta da tabela efetiva com limite maior que zero; limite 0,00 →
@@ -441,7 +441,7 @@ Com a T-031, as constantes de `politica.py` deixam de existir (fim da regra
     política com `hospedagem` 0 na padrão e `CC-ADM` → "centro de custo CC-ADM
     usando limite herdado da política padrão".
   - **Teste:** `tests/test_rn001_categoria.py`
-  - **Commit:**
+  - **Commit:** 341ec0c
 
 - [x] **T-033** — Etapa de limites pela tabela efetiva, incluindo
   `representacao` como categoria independente, e justificativa de
@@ -466,7 +466,7 @@ Com a T-031, as constantes de `politica.py` deixam de existir (fim da regra
     "política padrão; centro de custo CC-Suporte-N2 não cadastrado".
   - **Teste:** `tests/test_rn008_limites.py`, `tests/test_rn009_distribuicao.py`,
     `tests/test_rn010_parcial.py`, `tests/test_rn011_viagem.py`
-  - **Commit:**
+  - **Commit:** a0ad560
 
 - [x] **T-034** — Etapa de conversão (etapa 3 da §8, antes de valor negativo):
   novo tipo de etapa `Conversao` em `motor.py`, primeiro item de `ETAPAS`, que
@@ -502,7 +502,7 @@ Com a T-031, as constantes de `politica.py` deixam de existir (fim da regra
     `tests/test_motor.py::test_dt010_conversao_e_a_primeira_etapa`,
     `tests/test_rn003_arredondamento.py::test_rn003_arredonda_uma_vez_depois_da_conversao`,
     `tests/test_secao7_casos_de_borda.py` (linha "Campo desconhecido")
-  - **Commit:**
+  - **Commit:** 88a9c2b
 
 - [x] **T-035** — Nota fiscal comparada com o valor convertido para reais
   (`test(T-035)`; a T-034 já entrega `valor_considerado` em reais).
@@ -512,7 +512,7 @@ Com a T-031, as constantes de `politica.py` deixam de existir (fim da regra
     20,00 USD (abaixo de 100 na moeda original, acima em reais), sem nota →
     recusado.
   - **Teste:** `tests/test_rn007_nota_fiscal.py::test_rn007_compara_valor_convertido_*`
-  - **Commit:**
+  - **Commit:** accb924
 
 - [x] **T-036** — Duplicatas exigem a mesma moeda e o mesmo valor informado
   arredondado para centavos na moeda original (em `BRL`, o próprio
@@ -525,7 +525,7 @@ Com a T-031, as constantes de `politica.py` deixam de existir (fim da regra
     22,00 EUR → duplicatas. Duas GBP iguais → ambas `COTACAO_INDISPONIVEL`,
     nenhuma `DUPLICATA`.
   - **Teste:** `tests/test_rn006_duplicatas.py`
-  - **Commit:**
+  - **Commit:** a3cb4fe
 
 - [x] **T-037** — Saída com os campos novos, na ordem da §4: `moeda`,
   `taxa_cambio` (como está no documento, sem quantizar) e `data_cotacao`
@@ -540,7 +540,7 @@ Com a T-031, as constantes de `politica.py` deixam de existir (fim da regra
   - **Teste:** `tests/test_saida_serializacao.py::test_dt005_campos_do_item_na_ordem_da_spec`,
     `::test_dt005_moeda_e_cotacao_em_brl`, `::test_dt005_taxa_cambio_sem_quantizar`,
     `::test_dt005_nulos_em_cotacao_indisponivel`, `::test_dt005_nulos_em_dados_invalidos`
-  - **Commit:**
+  - **Commit:** dda18f4
 
 ### 7.3 — Integração, aceite e rastreabilidade
 
@@ -576,7 +576,7 @@ Com a T-031, as constantes de `politica.py` deixam de existir (fim da regra
     `::test_rn018_sem_cambio_despesa_estrangeira_cotacao_indisponivel`,
     `::test_dt006_argumentos_invalidos_retornam_2` (com `--input` ausente e
     argumento desconhecido)
-  - **Commit:**
+  - **Commit:** f9248fc
 
 - [x] **T-039** — Casos novos da §7 da spec 2.1 na tabela parametrizada, com o
   nome do caso como `id` (`test(T-039)`).
@@ -591,7 +591,7 @@ Com a T-031, as constantes de `politica.py` deixam de existir (fim da regra
     "Categoria ausente na tabela do centro".
   - **Teste:** `tests/test_secao7_casos_de_borda.py::test_secao7_caso_de_borda`,
     `::test_secao7_tem_71_casos`
-  - **Commit:**
+  - **Commit:** f218cbb
 
 - [x] **T-040** — Aceite dos dois documentos do envelope pela CLI, com
   `politica-v4.json` e `cambio.json` (`test(T-040)`).
@@ -609,7 +609,7 @@ Com a T-031, as constantes de `politica.py` deixam de existir (fim da regra
     todo item cita `RN-\d{3}`; duas execuções idênticas byte a byte; trocar as
     descrições não altera `valor_reembolsavel`, `status` nem `motivo`.
   - **Teste:** `tests/test_secao9_aceite_envelope.py`
-  - **Commit:**
+  - **Commit:** ed59319
 
 - [x] **T-041** — Rastreabilidade: o teste exige `test_rnNNN_*.py` de RN-001 a
   RN-018; a tabela de Cobertura deste arquivo ganha RN-015 a RN-018, AMB-018 a
@@ -621,7 +621,7 @@ Com a T-031, as constantes de `politica.py` deixam de existir (fim da regra
     da spec aparecem na Cobertura com task e teste.
   - **Teste:** `tests/test_rastreabilidade.py::test_rastreabilidade_spec_tem_rn001_a_rn018`,
     `::test_rastreabilidade_toda_rn_tem_arquivo_de_teste`
-  - **Commit:**
+  - **Commit:** 48e3c54
 
 ---
 
