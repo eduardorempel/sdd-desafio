@@ -611,7 +611,7 @@ Com a T-031, as constantes de `politica.py` deixam de existir (fim da regra
   - **Teste:** `tests/test_secao9_aceite_envelope.py`
   - **Commit:**
 
-- [ ] **T-041** — Rastreabilidade: o teste exige `test_rnNNN_*.py` de RN-001 a
+- [x] **T-041** — Rastreabilidade: o teste exige `test_rnNNN_*.py` de RN-001 a
   RN-018; a tabela de Cobertura deste arquivo ganha RN-015 a RN-018, AMB-018 a
   AMB-036 e as tasks da Fase 7 nas linhas revistas. Fica por último porque só
   passa quando RN-015 a RN-018 têm teste.
@@ -632,38 +632,65 @@ exatamente a matriz que a correção vai montar.
 
 | Regra da spec | Task | Teste |
 |---|---|---|
-| RN-001 | T-012 | `test_rn001_categoria.py` |
-| RN-002 | T-003, T-008 | `test_rn002_normalizacao.py` |
-| RN-003 | T-004, T-008, T-018 | `test_rn003_arredondamento.py`, `test_saida_serializacao.py` |
+| RN-001 | T-012, T-032 | `test_rn001_categoria.py` |
+| RN-002 | T-003, T-008, T-027, T-028 | `test_rn002_normalizacao.py`, `test_rn015_politica.py`, `test_rn016_politica_aplicavel.py` |
+| RN-003 | T-004, T-008, T-018, T-034, T-037 | `test_rn003_arredondamento.py`, `test_saida_serializacao.py` |
 | RN-004 | T-011 | `test_rn004_periodo.py` |
-| RN-005 | T-010 | `test_rn005_valor_negativo.py` |
-| RN-006 | T-013 | `test_rn006_duplicatas.py` |
-| RN-007 | T-014 | `test_rn007_nota_fiscal.py` |
-| RN-008 | T-015 | `test_rn008_limites.py` |
-| RN-009 | T-015, T-016 | `test_rn009_distribuicao.py` |
-| RN-010 | T-015 | `test_rn010_parcial.py` |
-| RN-011 | T-017 | `test_rn011_viagem.py` |
-| RN-012 | T-017 | `test_rn012_calendario.py` |
-| RN-013 | T-005, T-006, T-007, T-019 | `test_rn013_dados_invalidos.py`, `test_cli.py` |
-| RN-014 | T-023 | `test_rn014_descricao.py` |
+| RN-005 | T-010, T-034 | `test_rn005_valor_negativo.py`, `test_rn018_cambio.py` |
+| RN-006 | T-013, T-036 | `test_rn006_duplicatas.py` |
+| RN-007 | T-014, T-031, T-035 | `test_rn007_nota_fiscal.py` |
+| RN-008 | T-015, T-031, T-033 | `test_rn008_limites.py` |
+| RN-009 | T-015, T-016, T-033 | `test_rn009_distribuicao.py` |
+| RN-010 | T-015, T-033 | `test_rn010_parcial.py` |
+| RN-011 | T-017, T-033 | `test_rn011_viagem.py` |
+| RN-012 | T-017, T-034 | `test_rn012_calendario.py`, `test_rn018_cambio.py` |
+| RN-013 | T-005, T-006, T-007, T-019, T-028, T-030, T-031, T-038 | `test_rn013_dados_invalidos.py`, `test_rn017_moeda.py`, `test_cli.py` |
+| RN-014 | T-023, T-040 | `test_rn014_descricao.py`, `test_secao9_aceite_envelope.py` |
+| RN-015 | T-027, T-031 | `test_rn015_politica.py`, `test_cli.py` |
+| RN-016 | T-028, T-032, T-033, T-038, T-040 | `test_rn016_politica_aplicavel.py`, `test_rn001_categoria.py`, `test_rn008_limites.py`, `test_cli.py`, `test_secao9_aceite_envelope.py` |
+| RN-017 | T-030 | `test_rn017_moeda.py` |
+| RN-018 | T-029, T-034, T-038 | `test_rn018_cambio.py`, `test_cli.py` |
 | AMB-001 | T-015 | `test_rn008_limites.py` |
 | AMB-002 | T-015 | `test_rn009_distribuicao.py` |
 | AMB-003 | T-015 | `test_rn010_parcial.py` |
 | AMB-004 | T-014 | `test_rn007_nota_fiscal.py` |
-| AMB-005 | T-014 | `test_rn007_nota_fiscal.py` |
-| AMB-006 | T-017, T-023 | `test_rn011_viagem.py`, `test_rn014_descricao.py` |
+| AMB-005 | T-014, T-035 | `test_rn007_nota_fiscal.py` |
+| AMB-006 | T-017, T-023, T-040 | `test_rn011_viagem.py`, `test_rn014_descricao.py`, `test_secao9_aceite_envelope.py` |
 | AMB-007 | T-017 | `test_rn011_viagem.py` |
-| AMB-008 | T-015, T-023 | `test_rn008_limites.py`, `test_rn014_descricao.py` |
+| AMB-008 | T-015, T-023, T-033 | `test_rn008_limites.py`, `test_rn014_descricao.py` |
 | AMB-009 | T-011 | `test_rn004_periodo.py` |
-| AMB-010 | T-013, T-023 | `test_rn006_duplicatas.py`, `test_rn014_descricao.py` |
+| AMB-010 | T-013, T-023, T-036 | `test_rn006_duplicatas.py`, `test_rn014_descricao.py` |
 | AMB-011 | T-010, T-015 | `test_rn005_valor_negativo.py`, `test_rn008_limites.py` |
-| AMB-012 | T-004 | `test_rn003_arredondamento.py` |
+| AMB-012 | T-004, T-034 | `test_rn003_arredondamento.py` |
 | AMB-013 | T-003 | `test_rn002_normalizacao.py` |
-| AMB-014 | T-012 | `test_rn001_categoria.py` |
+| AMB-014 | T-012, T-032 | `test_rn001_categoria.py` |
 | AMB-015 | T-017 | `test_rn012_calendario.py` |
 | AMB-016 | T-009 | `test_motor.py` |
 | AMB-017 | T-006, T-007 | `test_rn013_dados_invalidos.py` |
-| §4 Saída | T-002, T-018, T-021 | `test_modelo.py`, `test_saida_serializacao.py`, `test_secao9_aceite_exemplo.py` |
-| §7 Casos de borda | T-022 | `test_secao7_casos_de_borda.py` |
-| §8 Ordem das regras | T-009 | `test_motor.py` |
-| §9 Critérios de aceite | T-020, T-021, T-023 | `test_secao9_aceite_exemplo.py` |
+| AMB-018 | T-028 | `test_rn016_politica_aplicavel.py`, `test_rn013_dados_invalidos.py` |
+| AMB-019 | T-028, T-040 | `test_rn016_politica_aplicavel.py`, `test_secao9_aceite_envelope.py` |
+| AMB-020 | T-028 | `test_rn016_politica_aplicavel.py` |
+| AMB-021 | T-028, T-032, T-033 | `test_rn016_politica_aplicavel.py`, `test_rn001_categoria.py`, `test_rn008_limites.py` |
+| AMB-022 | T-032 | `test_rn001_categoria.py` |
+| AMB-023 | T-032, T-033 | `test_rn001_categoria.py`, `test_rn008_limites.py` |
+| AMB-024 | T-030 | `test_rn017_moeda.py` |
+| AMB-025 | T-026, T-034 | `test_modelo.py`, `test_rn018_cambio.py` |
+| AMB-026 | T-034 | `test_rn018_cambio.py` |
+| AMB-027 | T-034 | `test_rn003_arredondamento.py`, `test_rn018_cambio.py` |
+| AMB-028 | T-035 | `test_rn007_nota_fiscal.py` |
+| AMB-029 | T-034 | `test_rn018_cambio.py`, `test_motor.py` |
+| AMB-030 | T-036 | `test_rn006_duplicatas.py` |
+| AMB-031 | T-027, T-031 | `test_rn015_politica.py`, `test_cli.py` |
+| AMB-032 | T-029, T-038 | `test_rn018_cambio.py`, `test_cli.py` |
+| AMB-033 | T-026, T-037 | `test_saida_serializacao.py` |
+| AMB-034 | T-027 | `test_rn015_politica.py` |
+| AMB-035 | T-033 | `test_rn011_viagem.py` |
+| AMB-036 | T-027, T-031 | `test_rn015_politica.py`, `test_rn008_limites.py` |
+| AMB-037 | T-028, T-032, T-033 | `test_rn016_politica_aplicavel.py`, `test_rn001_categoria.py`, `test_rn008_limites.py` |
+| AMB-038 | T-027, T-028, T-040 | `test_rn015_politica.py`, `test_rn016_politica_aplicavel.py`, `test_secao9_aceite_envelope.py` |
+| AMB-039 | T-027 | `test_rn015_politica.py` |
+| AMB-040 | T-028, T-032, T-033 | `test_rn016_politica_aplicavel.py`, `test_rn001_categoria.py`, `test_rn008_limites.py` |
+| §4 Saída | T-002, T-018, T-021, T-026, T-037, T-038, T-040 | `test_modelo.py`, `test_saida_serializacao.py`, `test_secao9_aceite_exemplo.py`, `test_secao9_aceite_envelope.py` |
+| §7 Casos de borda | T-022, T-039 | `test_secao7_casos_de_borda.py` |
+| §8 Ordem das regras | T-009, T-031, T-034 | `test_motor.py` |
+| §9 Critérios de aceite | T-020, T-021, T-023, T-038, T-040 | `test_secao9_aceite_exemplo.py`, `test_secao9_aceite_envelope.py` |

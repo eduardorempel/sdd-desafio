@@ -24,8 +24,8 @@ def _arquivos_de_teste() -> list[str]:
     return [p.name for p in TESTES.glob("test_rn*.py")]
 
 
-def test_rastreabilidade_spec_tem_rn001_a_rn014():
-    assert rns_da_spec(SPEC.read_text(encoding="utf-8")) == {f"RN-{n:03d}" for n in range(1, 15)}
+def test_rastreabilidade_spec_tem_rn001_a_rn018():
+    assert rns_da_spec(SPEC.read_text(encoding="utf-8")) == {f"RN-{n:03d}" for n in range(1, 19)}
 
 
 def test_rastreabilidade_toda_rn_tem_arquivo_de_teste():
@@ -35,5 +35,5 @@ def test_rastreabilidade_toda_rn_tem_arquivo_de_teste():
 
 def test_rastreabilidade_remover_um_arquivo_faz_falhar():
     rns = rns_da_spec(SPEC.read_text(encoding="utf-8"))
-    arquivos = [a for a in _arquivos_de_teste() if not a.startswith("test_rn007_")]
-    assert rns_sem_teste(rns, arquivos) == {"RN-007"}
+    arquivos = [a for a in _arquivos_de_teste() if a != "test_rn018_cambio.py"]
+    assert rns_sem_teste(rns, arquivos) == {"RN-018"}
