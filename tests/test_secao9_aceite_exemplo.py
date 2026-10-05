@@ -6,12 +6,14 @@ from decimal import Decimal
 from pathlib import Path
 
 import pytest
+from fabrica import politica_aplicavel
 
 from reembolso.entrada import ler_documento
 from reembolso.motor import calcular
 from reembolso.saida import montar_saida, serializar
 
 EXEMPLO = Path(__file__).parent.parent / "exemplos" / "despesas-exemplo.json"
+POLITICA = Path(__file__).parent.parent / "exemplos" / "envelope" / "politica-v4.json"
 
 # Tabela da seção 9 da spec: id, valor_reembolsavel, status, motivo.
 TABELA_SECAO9 = [
@@ -34,7 +36,7 @@ TABELA_SECAO9 = [
 
 def _processar(texto: str) -> str:
     documento = ler_documento(texto)
-    return serializar(montar_saida(documento, calcular(documento)))
+    return serializar(montar_saida(documento, calcular(documento, politica_aplicavel())))
 
 
 @pytest.fixture(scope="module")
@@ -95,7 +97,18 @@ def test_todo_item_cita_rn(saida):
 
 def _rodar_cli(saida_path):
     return subprocess.run(
-        [sys.executable, "-m", "reembolso", "calcular", "--input", EXEMPLO, "--output", saida_path],
+        [
+            sys.executable,
+            "-m",
+            "reembolso",
+            "calcular",
+            "--input",
+            EXEMPLO,
+            "--politica",
+            POLITICA,
+            "--output",
+            saida_path,
+        ],
         capture_output=True,
         cwd=EXEMPLO.parent.parent,
         check=True,

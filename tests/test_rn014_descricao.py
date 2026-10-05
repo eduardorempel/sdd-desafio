@@ -3,6 +3,7 @@ from decimal import Decimal
 from pathlib import Path
 
 import pytest
+from fabrica import politica_aplicavel
 
 from reembolso.entrada import ler_documento
 from reembolso.motor import calcular
@@ -16,7 +17,7 @@ REMOVER = object()
 def _decisoes(dados: dict) -> list[tuple]:
     texto = serializar(dados)
     documento = ler_documento(texto)
-    saida = montar_saida(documento, calcular(documento))
+    saida = montar_saida(documento, calcular(documento, politica_aplicavel()))
     return [(i["valor_reembolsavel"], i["status"], i["motivo"]) for i in saida["itens"]]
 
 

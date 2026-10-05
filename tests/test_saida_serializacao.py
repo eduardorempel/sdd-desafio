@@ -1,7 +1,7 @@
 import json
 from decimal import Decimal
 
-from fabrica import despesa, documento, invalida
+from fabrica import despesa, documento, invalida, politica_aplicavel
 
 from reembolso.modelo import Motivo, Resultado, Status
 from reembolso.motor import calcular
@@ -53,7 +53,7 @@ def test_dt005_motivo_nulo_em_item_aprovado():
 
 
 def test_dt005_nulos_em_dados_invalidos():
-    resultados = calcular(documento(invalida(1, id=None, valor=None)))
+    resultados = calcular(documento(invalida(1, id=None, valor=None)), politica_aplicavel())
     item = json.loads(_texto(*resultados))["itens"][0]
     assert item["id"] is None
     assert item["valor_informado"] is None
@@ -68,7 +68,8 @@ def test_dt005_total_e_a_soma_dos_itens():
             despesa(1, valor="33.333"),
             despesa(2, valor="10.005", data="2026-07-11"),
             despesa(3, valor="-45.00", data="2026-07-12"),
-        )
+        ),
+        politica_aplicavel(),
     )
     saida = json.loads(_texto(*resultados), parse_float=Decimal)
     assert saida["total_reembolsavel"] == Decimal("43.34")

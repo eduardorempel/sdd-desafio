@@ -4,6 +4,7 @@ import json
 from decimal import Decimal
 
 import pytest
+from fabrica import politica_aplicavel
 
 from reembolso.entrada import EntradaInvalida, ler_documento
 from reembolso.motor import calcular
@@ -276,7 +277,10 @@ CASOS = [
 
 def _processar(texto: str) -> dict:
     documento = ler_documento(texto)
-    return json.loads(serializar(montar_saida(documento, calcular(documento))), parse_float=Decimal)
+    return json.loads(
+        serializar(montar_saida(documento, calcular(documento, politica_aplicavel()))),
+        parse_float=Decimal,
+    )
 
 
 def _como_decimal(valor):

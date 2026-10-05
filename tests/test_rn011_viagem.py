@@ -3,10 +3,11 @@ from collections import defaultdict
 from decimal import Decimal
 from pathlib import Path
 
+from fabrica import politica_aplicavel
+
 from reembolso.entrada import ler_documento
 from reembolso.modelo import Despesa
 from reembolso.motor import calcular
-from reembolso.politica import LIMITE_POR_DATA
 
 EXEMPLO = Path(__file__).parent.parent / "exemplos" / "despesas-exemplo.json"
 
@@ -31,7 +32,7 @@ def test_rn011_d003_corrida_aeroporto_recebe_limite_normal():
         "valor": 100.00,
         "tem_nota_fiscal": False,
     }
-    item = calcular(ler_documento(_documento_com(d003)))[0]
+    item = calcular(ler_documento(_documento_com(d003)), politica_aplicavel())[0]
     assert item.valor_reembolsavel == Decimal("80.00")
     assert "R$ 80,00" in item.justificativa
 
@@ -55,17 +56,19 @@ def test_rn011_hospedagem_no_mesmo_dia_nao_amplia_limite():
         "valor": 90.00,
         "tem_nota_fiscal": True,
     }
-    _, r_jantar = calcular(ler_documento(_documento_com(hotel, jantar)))
+    _, r_jantar = calcular(ler_documento(_documento_com(hotel, jantar)), politica_aplicavel())
     assert r_jantar.valor_reembolsavel == Decimal("60.00")
 
 
 def test_rn011_exemplo_nenhuma_despesa_acima_da_tabela_da_rn008():
     documento = ler_documento(EXEMPLO.read_text(encoding="utf-8"))
-    resultados = calcular(documento)
+    resultados = calcular(documento, politica_aplicavel())
     soma: dict[tuple, Decimal] = defaultdict(Decimal)
     for despesa, resultado in zip(documento.despesas, resultados, strict=True):
         assert isinstance(despesa, Despesa)
         soma[(despesa.data, despesa.categoria)] += resultado.valor_reembolsavel
+    politica = politica_aplicavel()
     for (_, categoria), total in soma.items():
-        if categoria in LIMITE_POR_DATA:
-            assert total <= LIMITE_POR_DATA[categoria]
+        limite, _ = politica.regra(categoria)
+        if limite is not None:
+            assert total <= limite

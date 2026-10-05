@@ -2,6 +2,7 @@ import json
 from decimal import Decimal
 
 import pytest
+from fabrica import politica_aplicavel
 
 from reembolso.entrada import ler_despesa, ler_documento
 from reembolso.modelo import Despesa, Invalida, Motivo
@@ -65,7 +66,7 @@ def test_rn017_moeda_invalida_nao_impede_as_demais():
             ],
         }
     )
-    resultados = calcular(ler_documento(texto), [])
+    resultados = calcular(ler_documento(texto), politica_aplicavel(), etapas=[])
     assert [r.motivo for r in resultados] == [
         None,
         Motivo.DADOS_INVALIDOS,

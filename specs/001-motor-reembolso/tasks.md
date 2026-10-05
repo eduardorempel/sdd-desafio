@@ -389,7 +389,7 @@ Com a T-031, as constantes de `politica.py` deixam de existir (fim da regra
 
 ### 7.2 — Regras com política externa e câmbio
 
-- [ ] **T-031** — Política externa no motor e na CLI:
+- [x] **T-031** — Política externa no motor e na CLI:
   `calcular(documento, politica, cambio=None, etapas=None)` monta um
   `Contexto(documento, politica, cambio)` e o passa a todas as etapas no lugar
   do `Documento` (troca mecânica de assinatura de todas as etapas, num único

@@ -1,4 +1,4 @@
-"""Execução das etapas 3 a 8 da spec §8 sobre as despesas de um documento."""
+"""Execução das etapas da spec §8 sobre as despesas de um documento."""
 
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass
@@ -6,6 +6,8 @@ from decimal import Decimal
 
 from reembolso import etapas as regras
 from reembolso import justificativas
+from reembolso.cambio import Cambio
+from reembolso.etapas import Contexto
 from reembolso.modelo import (
     Corte,
     Despesa,
@@ -16,6 +18,7 @@ from reembolso.modelo import (
     Resultado,
     Status,
 )
+from reembolso.politica import PoliticaAplicavel
 
 ZERO = Decimal("0.00")
 
@@ -24,7 +27,7 @@ ZERO = Decimal("0.00")
 class PorItem:
     """Etapa que decide sobre cada despesa isoladamente: `None` (passa) ou `Recusa`."""
 
-    regra: Callable[[Despesa, Documento], Recusa | None]
+    regra: Callable[[Despesa, Contexto], Recusa | None]
 
 
 @dataclass(frozen=True)
@@ -34,12 +37,12 @@ class EmGrupo:
     Devolve as decisões indexadas pela posição; despesas ausentes do dicionário passam.
     """
 
-    regra: Callable[[list[Despesa], Documento], dict[int, Recusa | Corte]]
+    regra: Callable[[list[Despesa], Contexto], dict[int, Recusa | Corte]]
 
 
 Etapa = PorItem | EmGrupo
 
-# Ordem das etapas 3 a 8 da spec §8. As etapas 1 e 2 acontecem em entrada.py.
+# Ordem das etapas da spec §8. As etapas 1 e 2 acontecem em entrada.py.
 ETAPAS: list[Etapa] = [
     PorItem(regras.valor_negativo),  # RN-005 → VALOR_NEGATIVO
     PorItem(regras.periodo),  # RN-004 → FORA_DO_PERIODO
@@ -50,11 +53,11 @@ ETAPAS: list[Etapa] = [
 ]
 
 
-def _decisoes(etapa: Etapa, vivas: list[Despesa], documento: Documento) -> dict:
+def _decisoes(etapa: Etapa, vivas: list[Despesa], contexto: Contexto) -> dict:
     if isinstance(etapa, PorItem):
-        decisoes = {d.posicao: etapa.regra(d, documento) for d in vivas}
+        decisoes = {d.posicao: etapa.regra(d, contexto) for d in vivas}
         return {posicao: r for posicao, r in decisoes.items() if r is not None}
-    return etapa.regra(list(vivas), documento)
+    return etapa.regra(list(vivas), contexto)
 
 
 def _recusado(despesa: Despesa | Invalida, recusa: Recusa) -> Resultado:
@@ -90,13 +93,19 @@ def _final(despesa: Despesa, corte: Corte | None) -> Resultado:
     )
 
 
-def calcular(documento: Documento, etapas: Sequence[Etapa] | None = None) -> list[Resultado]:
+def calcular(
+    documento: Documento,
+    politica: PoliticaAplicavel,
+    cambio: Cambio | None = None,
+    etapas: Sequence[Etapa] | None = None,
+) -> list[Resultado]:
     """Aplica as etapas em ordem e devolve um `Resultado` por despesa, na ordem da entrada.
 
-    Uma despesa recusada sai da lista viva e não chega às etapas seguintes nem
-    consome limite (spec §8).
+    Todas as etapas recebem o mesmo `Contexto` (DT-009). Uma despesa recusada sai da
+    lista viva e não chega às etapas seguintes nem consome limite (spec §8).
     """
     etapas = ETAPAS if etapas is None else etapas
+    contexto = Contexto(documento, politica, cambio)
     resultados: dict[int, Resultado] = {}
     vivas: list[Despesa] = []
     for despesa in documento.despesas:
@@ -109,7 +118,7 @@ def calcular(documento: Documento, etapas: Sequence[Etapa] | None = None) -> lis
     cortes: dict[int, Corte] = {}
     for etapa in etapas:
         por_posicao = {d.posicao: d for d in vivas}
-        for posicao, decisao in _decisoes(etapa, vivas, documento).items():
+        for posicao, decisao in _decisoes(etapa, vivas, contexto).items():
             if isinstance(decisao, Recusa):
                 resultados[posicao] = _recusado(por_posicao[posicao], decisao)
             else:

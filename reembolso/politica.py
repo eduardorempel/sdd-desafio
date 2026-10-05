@@ -1,5 +1,7 @@
-"""Documento de política (RN-015), política aplicável por centro de custo (RN-016) e
-valores da política, como dados (plan §4)."""
+"""Documento de política (RN-015) e política aplicável por centro de custo (RN-016).
+
+Os valores da política não estão no código: vêm do documento informado (plan §4, DT-004).
+"""
 
 from dataclasses import dataclass
 from decimal import Decimal
@@ -7,19 +9,6 @@ from enum import Enum
 
 from reembolso.entrada import EntradaInvalida, ler_json, numero, texto_preenchido
 from reembolso.normalizacao import normalizar_moeda, normalizar_texto
-
-# RN-001: lista fechada de categorias reembolsáveis, já normalizadas (RN-002).
-CATEGORIAS_REEMBOLSAVEIS = frozenset({"alimentacao", "transporte_urbano", "hospedagem"})
-
-# RN-007: exige nota fiscal quando o valor considerado é estritamente maior que o limiar.
-LIMIAR_NOTA_FISCAL = Decimal("100.00")
-
-# RN-008: limite da soma reembolsada por combinação de data e categoria.
-LIMITE_POR_DATA = {
-    "alimentacao": Decimal("60.00"),
-    "transporte_urbano": Decimal("80.00"),
-    "hospedagem": Decimal("250.00"),
-}
 
 MOEDA_BASE = "BRL"
 PERIODICIDADES = frozenset({"dia", "diaria"})
