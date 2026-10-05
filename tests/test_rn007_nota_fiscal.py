@@ -1,7 +1,7 @@
 from decimal import Decimal
 
 import pytest
-from fabrica import contexto, despesa, documento, politica_aplicavel
+from fabrica import cambio, contexto, despesa, documento, politica_aplicavel
 
 from reembolso.etapas import nota_fiscal
 from reembolso.modelo import Motivo, Status
@@ -75,3 +75,44 @@ def test_rn007_usa_valor_da_despesa_e_nao_a_soma_do_dia():
         politica_aplicavel(),
     )
     assert all(r.motivo != Motivo.NOTA_FISCAL_AUSENTE for r in resultados)
+
+
+def _estrangeira(id, categoria, data, valor, moeda):
+    item = calcular(
+        documento(
+            despesa(
+                1,
+                id=id,
+                data=data,
+                categoria=categoria,
+                valor=valor,
+                moeda=moeda,
+                tem_nota_fiscal=False,
+            )
+        ),
+        politica_aplicavel("CC-COMERCIAL"),
+        cambio(),
+    )[0]
+    return item
+
+
+def test_rn007_compara_valor_convertido_e005_recusada():
+    item = _estrangeira("e-005", "transporte_urbano", "2026-07-20", "40.00", "USD")
+    assert item.valor_considerado == Decimal("220.00")
+    assert item.status == Status.RECUSADO
+    assert item.motivo == Motivo.NOTA_FISCAL_AUSENTE
+    assert item.valor_reembolsavel == Decimal("0.00")
+
+
+def test_rn007_compara_valor_convertido_e003_abaixo_do_limiar_passa():
+    item = _estrangeira("e-003", "alimentacao", "2026-07-15", "14.50", "EUR")
+    assert item.valor_considerado == Decimal("85.26")
+    assert item.status == Status.APROVADO
+    assert item.valor_reembolsavel == Decimal("85.26")
+
+
+def test_rn007_compara_valor_convertido_e_nao_o_original():
+    # 20,00 USD está abaixo de 100 na moeda original, mas 108,40 em reais.
+    item = _estrangeira("u-1", "transporte_urbano", "2026-07-13", "20.00", "USD")
+    assert item.valor_considerado == Decimal("108.40")
+    assert item.motivo == Motivo.NOTA_FISCAL_AUSENTE

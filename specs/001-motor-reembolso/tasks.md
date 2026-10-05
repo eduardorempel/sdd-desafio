@@ -504,7 +504,7 @@ Com a T-031, as constantes de `politica.py` deixam de existir (fim da regra
     `tests/test_secao7_casos_de_borda.py` (linha "Campo desconhecido")
   - **Commit:**
 
-- [ ] **T-035** — Nota fiscal comparada com o valor convertido para reais
+- [x] **T-035** — Nota fiscal comparada com o valor convertido para reais
   (`test(T-035)`; a T-034 já entrega `valor_considerado` em reais).
   - **Atende:** RN-007, AMB-028
   - **Aceite:** e-005 (40,00 USD × 5,50 = 220,00, sem nota) → recusado,
