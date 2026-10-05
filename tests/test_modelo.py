@@ -4,6 +4,7 @@ from reembolso.modelo import Motivo, Status
 def test_motivos_iguais_aos_codigos_da_spec():
     assert {m.value for m in Motivo} == {
         "DADOS_INVALIDOS",
+        "COTACAO_INDISPONIVEL",
         "VALOR_NEGATIVO",
         "FORA_DO_PERIODO",
         "CATEGORIA_NAO_REEMBOLSAVEL",

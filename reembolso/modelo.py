@@ -18,6 +18,7 @@ class Motivo(StrEnum):
     """Códigos de motivo da saída (spec §4, tabela de motivos)."""
 
     DADOS_INVALIDOS = "DADOS_INVALIDOS"
+    COTACAO_INDISPONIVEL = "COTACAO_INDISPONIVEL"
     VALOR_NEGATIVO = "VALOR_NEGATIVO"
     FORA_DO_PERIODO = "FORA_DO_PERIODO"
     CATEGORIA_NAO_REEMBOLSAVEL = "CATEGORIA_NAO_REEMBOLSAVEL"
@@ -28,7 +29,10 @@ class Motivo(StrEnum):
 
 @dataclass(frozen=True)
 class Despesa:
-    """Despesa que passou pela etapa 1 (RN-013), já normalizada e arredondada."""
+    """Despesa que passou pela etapa 1 (RN-013), já normalizada e arredondada.
+
+    `valor_informado` está na moeda da despesa; `valor_considerado`, em reais (RN-018).
+    """
 
     posicao: int
     id: str
@@ -38,6 +42,9 @@ class Despesa:
     tem_nota_fiscal: bool
     valor_informado: Decimal
     valor_considerado: Decimal
+    moeda: str = "BRL"  # normalizada (RN-017)
+    taxa_cambio: Decimal | None = None  # como está no documento de câmbio; None em BRL
+    data_cotacao: date | None = None  # data da taxa usada; None em BRL
 
 
 @dataclass(frozen=True)
@@ -68,6 +75,9 @@ class Resultado:
     status: Status
     motivo: Motivo | None
     justificativa: str
+    moeda: str | None = "BRL"
+    taxa_cambio: Decimal | None = None
+    data_cotacao: date | None = None
 
 
 @dataclass(frozen=True)

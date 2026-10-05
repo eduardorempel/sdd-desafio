@@ -292,7 +292,7 @@ Com a T-031, as constantes de `politica.py` deixam de existir (fim da regra
 
 ### 7.1 — Modelo e documentos de entrada
 
-- [ ] **T-026** — `modelo.py`: motivo `COTACAO_INDISPONIVEL`; `Despesa` ganha
+- [x] **T-026** — `modelo.py`: motivo `COTACAO_INDISPONIVEL`; `Despesa` ganha
   `moeda`, `taxa_cambio` e `data_cotacao`; `Resultado` ganha `moeda`,
   `taxa_cambio` e `data_cotacao`. Valores padrão (`BRL`, nulo, nulo) mantêm as
   despesas da v3 como estão.
