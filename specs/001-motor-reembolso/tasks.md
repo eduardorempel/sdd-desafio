@@ -578,7 +578,7 @@ Com a T-031, as constantes de `politica.py` deixam de existir (fim da regra
     argumento desconhecido)
   - **Commit:**
 
-- [ ] **T-039** — Casos novos da §7 da spec 2.1 na tabela parametrizada, com o
+- [x] **T-039** — Casos novos da §7 da spec 2.1 na tabela parametrizada, com o
   nome do caso como `id` (`test(T-039)`).
   - **Atende:** spec §7 (casos de RN-001, RN-006, RN-007, RN-013, RN-015 a
     RN-018 e seção 8 incluídos nas specs 2.0 e 2.1), AMB-037, AMB-038, AMB-039,

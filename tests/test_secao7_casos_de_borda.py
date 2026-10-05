@@ -1,17 +1,19 @@
 """Tabela da seção 7 da spec: um caso por linha, com o nome da spec como `id`."""
 
 import json
+from dataclasses import dataclass
 from decimal import Decimal
+from pathlib import Path
 
 import pytest
-from fabrica import politica_aplicavel
 
-from reembolso.entrada import EntradaInvalida, ler_documento
-from reembolso.motor import calcular
-from reembolso.saida import montar_saida, serializar
+from reembolso.cli import main
+from reembolso.saida import serializar
 
 REMOVER = object()
 ERRO = "erro geral, sem saída"
+ENVELOPE = Path(__file__).parent.parent / "exemplos" / "envelope"
+EXEMPLO = Path(__file__).parent.parent / "exemplos" / "despesas-exemplo.json"
 
 
 def _aplicar(base: dict, alteracoes: dict) -> dict:
@@ -49,6 +51,51 @@ def doc(*despesas, periodo=None, colaborador=None, **raiz):
     return serializar(_aplicar(base, raiz))
 
 
+def _json(caminho: Path) -> dict:
+    return json.loads(caminho.read_text(encoding="utf-8"), parse_float=Decimal)
+
+
+def politica(**alteracoes) -> str:
+    """`politica-v4.json`; `alteracoes` usa `__` como separador de caminho."""
+    return serializar(_alterar(_json(ENVELOPE / "politica-v4.json"), alteracoes))
+
+
+def cambio(**alteracoes) -> str:
+    """`cambio.json`; `alteracoes` usa `__` como separador de caminho."""
+    return serializar(_alterar(_json(ENVELOPE / "cambio.json"), alteracoes))
+
+
+def _alterar(dados: dict, alteracoes: dict) -> dict:
+    for caminho, valor in alteracoes.items():
+        alvo = dados
+        *pais, campo = caminho.split("__")
+        for pai in pais:
+            alvo = alvo[pai]
+        if valor is REMOVER:
+            del alvo[campo]
+        else:
+            alvo[campo] = valor
+    return dados
+
+
+@dataclass(frozen=True)
+class Docs:
+    """Os três documentos de uma execução; `None` = documento não informado."""
+
+    despesas: str
+    politica: str | None = None
+    cambio: str | None = None
+
+
+def docs(despesas: str, politica_: str | None = REMOVER, cambio_: str | None = REMOVER) -> Docs:
+    """Por padrão, a política v4 e o câmbio do envelope."""
+    return Docs(
+        despesas,
+        politica() if politica_ is REMOVER else politica_,
+        cambio() if cambio_ is REMOVER else cambio_,
+    )
+
+
 def item(valor_reembolsavel, status, motivo=None, **outros):
     return {
         "valor_reembolsavel": valor_reembolsavel,
@@ -76,6 +123,26 @@ BISTRO = {"data": "2026-07-09", "fornecedor": "Bistro Central", "valor": Decimal
 HOSP_0714 = {"data": "2026-07-14", "categoria": "hospedagem"}
 ENG = {"centro_custo": "CC-ENG-PLATAFORMA"}
 COMERCIAL = {"centro_custo": "CC-COMERCIAL"}
+SUPORTE = {"centro_custo": "CC-SUPORTE-N2"}
+ADM = {"centro_custo": "CC-ADM"}
+E002 = {"data": "2026-07-14", "valor": Decimal("22.00"), "moeda": "EUR"}
+USD_0713 = {"data": "2026-07-13", "moeda": "USD"}
+TABELA_SECAO9 = [
+    aprovado("72.50"),
+    limitado("2.50"),
+    limitado("80.00"),
+    recusado("NOTA_FISCAL_AUSENTE"),
+    recusado("CATEGORIA_NAO_REEMBOLSAVEL"),
+    aprovado("54.90"),
+    recusado("DUPLICATA"),
+    recusado("FORA_DO_PERIODO"),
+    recusado("VALOR_NEGATIVO"),
+    recusado("CATEGORIA_NAO_REEMBOLSAVEL"),
+    aprovado("33.33"),
+    aprovado("47.20"),
+    recusado("CATEGORIA_NAO_REEMBOLSAVEL"),
+    aprovado("61.00"),
+]
 
 CASOS = [
     pytest.param(
@@ -108,7 +175,7 @@ CASOS = [
     pytest.param(
         doc(d("d-005", categoria="coworking", valor=Decimal("89.00"))),
         [recusado("CATEGORIA_NAO_REEMBOLSAVEL")],
-        id="Categoria fora da lista",
+        id="Categoria fora da política",
     ),
     pytest.param(
         doc(d("d-006", **BISTRO), d("d-007", **BISTRO)),
@@ -216,6 +283,11 @@ CASOS = [
         id="Indício de viagem na descrição",
     ),
     pytest.param(
+        doc(d("e-002", **E002, descricao="Almoco - Lisboa"), colaborador=COMERCIAL),
+        [limitado("90.00", valor_considerado="130.46")],
+        id="Indício de viagem pela moeda",
+    ),
+    pytest.param(
         doc(d("d-a", tem_nota_fiscal=REMOVER), d("d-b")),
         [recusado("DADOS_INVALIDOS"), aprovado("10.00")],
         id="Campo obrigatório ausente em uma despesa",
@@ -281,46 +353,296 @@ CASOS = [
         id="Documento com `NaN` ou `Infinity`",
     ),
     pytest.param(doc(), [], id="Lista de despesas vazia"),
+    pytest.param(
+        doc(d("d-x", valor=Decimal("61.00"))),
+        [limitado("60.00", justificativa_cita="(política padrão)")],
+        id="Centro de custo ausente",
+    ),
+    pytest.param(
+        doc(d("f-002", **HOSP_0714, valor=Decimal("310.00")), colaborador=SUPORTE),
+        [
+            limitado(
+                "250.00",
+                justificativa_cita="política padrão; centro de custo CC-SUPORTE-N2 não cadastrado",
+            )
+        ],
+        id="Centro de custo desconhecido",
+    ),
+    pytest.param(
+        doc(
+            d("f-002", **HOSP_0714, valor=Decimal("310.00")),
+            colaborador={"centro_custo": " CC-Suporte-N2 "},
+        ),
+        [
+            limitado(
+                "250.00",
+                justificativa_cita="política padrão; centro de custo CC-Suporte-N2 não cadastrado",
+            )
+        ],
+        id="Centro de custo desconhecido com espaços nas pontas",
+    ),
+    pytest.param(
+        doc(d("d-x", valor=Decimal("95.00")), colaborador={"centro_custo": " cc-comercial "}),
+        [limitado("90.00")],
+        id="Centro de custo com grafia diferente",
+    ),
+    pytest.param(
+        doc(d("d-x"), colaborador={"centro_custo": 42}), ERRO, id="Centro de custo com tipo errado"
+    ),
+    pytest.param(
+        doc(d("d-x", **HOSP_0714, valor=Decimal("300.00")), colaborador=ADM),
+        [
+            limitado(
+                "250.00",
+                justificativa_cita=(
+                    "centro de custo CC-ADM usando limite herdado da política padrão"
+                ),
+            )
+        ],
+        id="Categoria ausente na tabela do centro",
+    ),
+    pytest.param(
+        doc(d("d-x", valor=Decimal("95.00")), colaborador={"centro_custo": " cc-comercial "}),
+        [limitado("90.00", justificativa_cita="(centro de custo CC-COMERCIAL)")],
+        id="Grafia do centro de custo na justificativa",
+    ),
+    pytest.param(
+        doc(d("d-010", **HOSP_0714, valor=Decimal("480.00")), colaborador=ENG),
+        [recusado("CATEGORIA_NAO_REEMBOLSAVEL")],
+        id="Categoria com limite zero",
+    ),
+    pytest.param(
+        doc(
+            d("d-013", **HOSP_0714, valor=Decimal("690.00"), tem_nota_fiscal=False),
+            colaborador=ENG,
+        ),
+        [recusado("CATEGORIA_NAO_REEMBOLSAVEL")],
+        id="Limite zero vem antes da nota fiscal",
+    ),
+    pytest.param(
+        doc(d("f-003", categoria="representacao", valor=Decimal("190.00")), colaborador=SUPORTE),
+        [recusado("CATEGORIA_NAO_REEMBOLSAVEL")],
+        id="Representação em centro que não a tem",
+    ),
+    pytest.param(
+        doc(d("e-001", categoria="representacao", valor=Decimal("340.00")), colaborador=COMERCIAL),
+        [limitado("300.00")],
+        id="Representação acima do limite",
+    ),
+    pytest.param(
+        doc(d("e-010", valor=Decimal("88.00")), colaborador=COMERCIAL),
+        [aprovado("88.00", moeda="BRL")],
+        id="Moeda ausente",
+    ),
+    pytest.param(
+        doc(d("d-x", **{**USD_0713, "moeda": " usd "})),
+        [aprovado("54.20", moeda="USD", taxa_cambio="5.42")],
+        id="Moeda em minúsculas",
+    ),
+    pytest.param(
+        [doc(d("d-x", moeda=""), d("d-y")), doc(d("d-x", moeda=840), d("d-y"))],
+        [recusado("DADOS_INVALIDOS", moeda=None), aprovado("10.00")],
+        id="Moeda vazia ou de tipo errado",
+    ),
+    pytest.param(
+        doc(d("e-002", **E002), colaborador=COMERCIAL),
+        [
+            limitado(
+                "90.00", valor_considerado="130.46", taxa_cambio="5.93", data_cotacao="2026-07-14"
+            )
+        ],
+        id="Moeda estrangeira com cotação na data",
+    ),
+    pytest.param(
+        doc(d("e-006", data="2026-07-21", valor=Decimal("55.00"), moeda="GBP")),
+        [recusado("COTACAO_INDISPONIVEL", valor_considerado=None, moeda="GBP")],
+        id="Moeda sem cotação",
+    ),
+    pytest.param(
+        doc(
+            d("e-004", data="2026-07-18", valor=Decimal("30.00"), moeda="EUR"),
+            colaborador=COMERCIAL,
+        ),
+        [
+            limitado(
+                "90.00", valor_considerado="178.80", taxa_cambio="5.96", data_cotacao="2026-07-17"
+            )
+        ],
+        id="Data sem cotação (fim de semana)",
+    ),
+    pytest.param(
+        doc(d("d-x", data="2026-07-10", moeda="USD")),
+        [recusado("COTACAO_INDISPONIVEL")],
+        id="Data anterior à primeira cotação",
+    ),
+    pytest.param(
+        doc(d("d-x", data="2026-07-18")),
+        [aprovado("10.00", taxa_cambio=None, data_cotacao=None)],
+        id="Despesa em BRL em data sem cotação",
+    ),
+    pytest.param(
+        doc(d("d-x", **USD_0713, valor=Decimal("33.333"))),
+        [limitado("60.00", valor_considerado="180.66")],
+        id="Arredondamento cambial",
+    ),
+    pytest.param(
+        doc(
+            d(
+                "e-005",
+                data="2026-07-20",
+                categoria="transporte_urbano",
+                valor=Decimal("40.00"),
+                moeda="USD",
+                tem_nota_fiscal=False,
+            )
+        ),
+        [recusado("NOTA_FISCAL_AUSENTE", valor_considerado="220.00")],
+        id="Nota fiscal após conversão",
+    ),
+    pytest.param(
+        doc(
+            d(
+                "e-003",
+                data="2026-07-15",
+                valor=Decimal("14.50"),
+                moeda="EUR",
+                tem_nota_fiscal=False,
+            ),
+            colaborador=COMERCIAL,
+        ),
+        [aprovado("85.26")],
+        id="Abaixo do limiar após conversão",
+    ),
+    pytest.param(
+        doc(
+            d("e-a", **E002, fornecedor="Taberna do Chiado"),
+            d("e-b", **E002, fornecedor="Taberna do Chiado"),
+            colaborador=COMERCIAL,
+        ),
+        [limitado("90.00"), recusado("DUPLICATA", justificativa_cita="e-a")],
+        id="Duplicata na mesma moeda estrangeira",
+    ),
+    pytest.param(
+        doc(
+            d("e-a", **E002, fornecedor="Taberna do Chiado"),
+            d(
+                "e-b",
+                **{**E002, "valor": Decimal("130.46"), "moeda": "BRL"},
+                fornecedor="Taberna do Chiado",
+            ),
+            colaborador=COMERCIAL,
+        ),
+        [limitado("90.00"), limitado("0.00")],
+        id="Mesmo valor em reais, moedas diferentes",
+    ),
+    pytest.param(
+        doc(d("d-x", data="2026-07-21", valor=Decimal("-10.00"), moeda="GBP")),
+        [recusado("COTACAO_INDISPONIVEL")],
+        id="Estorno em moeda sem cotação",
+    ),
+    pytest.param(
+        doc(d("d-x", **USD_0713, valor=Decimal("-10.00"))),
+        [recusado("VALOR_NEGATIVO", valor_considerado="-54.20")],
+        id="Estorno em moeda estrangeira",
+    ),
+    pytest.param(
+        docs(doc(d("d-x", **USD_0713), d("d-y")), cambio_=None),
+        [recusado("COTACAO_INDISPONIVEL"), aprovado("10.00")],
+        id="Documento de câmbio ausente, despesa estrangeira",
+    ),
+    pytest.param(
+        docs(EXEMPLO.read_text(encoding="utf-8"), cambio_=None),
+        TABELA_SECAO9,
+        id="Documento de câmbio ausente, tudo em reais",
+    ),
+    pytest.param(docs(doc(d("d-x")), politica_=None), ERRO, id="Documento de política ausente"),
+    pytest.param(
+        [
+            docs(doc(d("d-x")), politica(padrao__alimentacao__limite=-1)),
+            docs(doc(d("d-x")), politica(padrao=REMOVER)),
+            docs(doc(d("d-x")), politica(padrao__alimentacao__periodicidade="mes")),
+        ],
+        ERRO,
+        id="Documento de política inválido",
+    ),
+    pytest.param(
+        [
+            docs(
+                doc(d("d-x", valor=Decimal("61.00"))),
+                politica(padrao__alimentacao__periodicidade="Dia"),
+            ),
+            docs(
+                doc(d("d-x", valor=Decimal("61.00"))),
+                politica(padrao__alimentacao__periodicidade=" diaria "),
+            ),
+        ],
+        [limitado("60.00")],
+        id="Periodicidade com grafia diferente",
+    ),
+    pytest.param(
+        [
+            docs(doc(d("d-x")), cambio_=cambio(**{"taxas__2026-07-13__USD": 0})),
+            docs(doc(d("d-x")), cambio_=cambio(**{"taxas__2026-07-13__USD": "5,42"})),
+        ],
+        ERRO,
+        id="Documento de câmbio inválido",
+    ),
+    pytest.param(
+        docs(doc(d("d-x")), cambio_=cambio(moeda_base="USD")), ERRO, id="Moedas base divergentes"
+    ),
 ]
 
 
-def _processar(texto: str) -> dict:
-    documento = ler_documento(texto)
-    return json.loads(
-        serializar(
-            montar_saida(documento, calcular(documento, politica_aplicavel(documento.centro_custo)))
-        ),
-        parse_float=Decimal,
-    )
+def _executar(pasta: Path, documentos: Docs) -> dict | None:
+    """Roda a CLI (fluxo real); `None` em erro geral, depois de conferir código 1 e sem saída."""
+    args = ["calcular"]
+    for opcao, texto in [
+        ("--input", documentos.despesas),
+        ("--politica", documentos.politica),
+        ("--cambio", documentos.cambio),
+    ]:
+        if texto is not None:
+            arquivo = pasta / f"{opcao[2:]}.json"
+            arquivo.write_text(texto, encoding="utf-8")
+            args += [opcao, str(arquivo)]
+    saida = pasta / "resultado.json"
+    saida.unlink(missing_ok=True)
+    codigo = main([*args, "--output", str(saida)])
+    if codigo != 0:
+        assert codigo == 1
+        assert not saida.exists()
+        return None
+    return _json(saida)
 
 
-def _como_decimal(valor):
-    return Decimal(valor) if isinstance(valor, str) else valor
+_TEXTO = {"status", "motivo", "id", "moeda", "data_cotacao"}
 
 
-def _verificar(texto: str, esperado):
+def _verificar(pasta: Path, documentos: Docs, esperado):
+    saida = _executar(pasta, documentos)
     if esperado == ERRO:
-        with pytest.raises(EntradaInvalida):
-            ler_documento(texto)
+        assert saida is None
         return
-    saida = _processar(texto)
+    assert saida is not None
     itens = saida["itens"]
     assert len(itens) == len(esperado)
     for obtido, campos in zip(itens, esperado, strict=True):
         for campo, valor in campos.items():
-            if campo in {"status", "motivo", "id"}:
+            if campo == "justificativa_cita":
+                assert valor in obtido["justificativa"]
+            elif campo in _TEXTO or not isinstance(valor, str):
                 assert obtido[campo] == valor, campo
             else:
-                assert obtido[campo] == _como_decimal(valor), campo
+                assert obtido[campo] == Decimal(valor), campo
     total = sum((i["valor_reembolsavel"] for i in itens), Decimal("0"))
     assert saida["total_reembolsavel"] == total
 
 
-def test_secao7_tem_37_casos():
-    assert len(CASOS) == 37
+def test_secao7_tem_71_casos():
+    assert len(CASOS) == 71
 
 
 @pytest.mark.parametrize(("entrada", "esperado"), CASOS)
-def test_secao7_caso_de_borda(entrada, esperado):
-    for texto in entrada if isinstance(entrada, list) else [entrada]:
-        _verificar(texto, esperado)
+def test_secao7_caso_de_borda(tmp_path, entrada, esperado):
+    for caso in entrada if isinstance(entrada, list) else [entrada]:
+        _verificar(tmp_path, caso if isinstance(caso, Docs) else docs(caso), esperado)
