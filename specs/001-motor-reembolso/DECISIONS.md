@@ -10,6 +10,58 @@ Ordem cronológica inversa: a mais recente primeiro.
 
 ---
 
+## D-003 — Complemento da D-002: justificativa de herança, grafia do centro de custo e periodicidade · `2026-10-04`
+
+**Gatilho:** ao escrever as tasks da Fase 7 (T-026 a T-041), o Claude apontou
+três pontos que a spec 2.0 não decidia e dos quais dependem T-027, T-028, T-032,
+T-033 e T-040. Ao ajustar as tasks, apontou um quarto ponto: a grafia do
+centro de custo não cadastrado na justificativa. As decisões abaixo são minhas e
+completam a v4/D-002.
+
+**O que mudou na spec (2.0 → 2.1):**
+- **RN-016:** a justificativa de categoria herdada da padrão cita os dois fatos:
+  "centro de custo CC-ADM usando limite herdado da política padrão" (AMB-037).
+  Com o centro cadastrado, o código citado é a grafia da chave no documento de
+  política: `" cc-comercial "` aparece como `CC-COMERCIAL` (AMB-038). Com o
+  centro não cadastrado, sem chave no documento, o código citado é o valor da
+  entrada só sem os espaços das pontas, mantendo maiúsculas, minúsculas e
+  acentos: `" CC-SUPORTE-N2 "` → `CC-SUPORTE-N2`. Não é a normalização da RN-002
+  (AMB-040). A lista de textos de origem ficou explícita para cada caso.
+- **RN-002 e RN-015:** `periodicidade` passa pela normalização antes da
+  validação; `"Dia"` e `" dia "` são `dia`, e o mesmo vale para `diaria`.
+  Depois da normalização, outro valor ou tipo diferente de texto é erro geral
+  (AMB-039).
+- **Seção 4:** a justificativa de `LIMITE_DIARIO` inclui o caso de limite
+  herdado da padrão.
+- **Seção 6:** novas AMB-037, AMB-038, AMB-039 e AMB-040.
+- **Seção 7:** 3 casos novos (grafia do centro de custo na justificativa,
+  grafia da periodicidade, centro de custo desconhecido com espaços nas
+  pontas); o caso "Categoria ausente na tabela do centro" passa a conferir a
+  justificativa de herança. Total de 68 → 71 casos.
+
+**Por quê:**
+- Citar só o centro esconde que o limite veio da padrão; citar só a padrão
+  sugere que o centro não foi reconhecido.
+- A grafia do documento de política é a canônica, e a mesma entrada com grafias
+  diferentes deve gerar a mesma justificativa.
+- Diferença de grafia não muda significado (mesmo raciocínio da AMB-013 e da
+  AMB-020).
+- Sem chave canônica, manter o código como foi digitado (só sem espaços nas
+  pontas) ajuda a achar o erro de digitação que levou à política padrão.
+
+**O que isso invalidou:** nada implementado ainda. Os totais da seção 9 não
+mudam.
+
+**Tasks afetadas:** T-027 (periodicidade normalizada), T-028 (origem com
+herança e grafia canônica), T-032, T-033 e T-040 (texto das justificativas),
+T-039 e o cabeçalho da Fase 7 (spec 2.0 → 2.1). `tasks.md` já reflete os três
+primeiros pontos. Falta a AMB-040 em T-028, T-032 e T-033, e a T-039 passa de
+70 para 71 casos.
+
+**Custo:** 2 arquivos (`spec.md`, `DECISIONS.md`), antes de qualquer código.
+
+---
+
 ## D-002 — Política v4: política externa por centro de custo, representação e câmbio · `2026-10-04`
 
 **Gatilho:** envelope lacrado do Dia 2 (Política de Reembolso v4), com

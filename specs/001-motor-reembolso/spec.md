@@ -1,6 +1,6 @@
 # Spec — Motor de Cálculo de Reembolso
 
-**Versão:** 2.0 · **Status:** rascunho · **Última alteração:** 2026-10-04
+**Versão:** 2.1 · **Status:** rascunho · **Última alteração:** 2026-10-04
 
 > **Regra de ouro deste arquivo:** ele descreve o QUÊ e o PORQUÊ. Nenhuma linha
 > aqui pode citar linguagem, biblioteca, classe, função ou estrutura de pasta.
@@ -122,8 +122,9 @@ A justificativa deve citar:
 
 - no caso de `DUPLICATA`, o `id` da despesa mantida;
 - no caso de `LIMITE_DIARIO`, o limite, o valor já consumido no dia e a
-  política de onde o limite veio (centro de custo ou política padrão, RN-016);
-- no caso de `CATEGORIA_NAO_REEMBOLSAVEL`, a política aplicada;
+  política de onde o limite veio (centro de custo, política padrão ou limite
+  herdado da padrão, RN-016);
+- no caso de `CATEGORIA_NAO_REEMBOLSAVEL`, a política aplicada (RN-016);
 - no caso de `COTACAO_INDISPONIVEL`, a moeda e a data da despesa.
 
 **Exemplo 1** (`exemplos/despesas-exemplo.json`, centro de custo
@@ -200,8 +201,9 @@ recusado. e-001 (`representacao`, `CC-COMERCIAL`) → reembolsável.
 são normalizados: espaços no início e no fim são removidos, letras maiúsculas
 viram minúsculas e acentos são removidos. A normalização não altera mais nada;
 espaços internos e outros caracteres são mantidos. As chaves de categoria e de
-centro de custo do documento de política passam pela mesma normalização.
-**Origem:** decisão desta spec (AMB-013, AMB-020)
+centro de custo e o valor de `periodicidade` do documento de política passam
+pela mesma normalização.
+**Origem:** decisão desta spec (AMB-013, AMB-020, AMB-039)
 **Aceite:** categoria `ALIMENTACAO`, ` Alimentação ` e `alimentacao` são tratadas
 como `alimentacao`. Fornecedores `Bistro Central` e `bistro central` são iguais.
 Centro de custo ` cc-comercial ` é o mesmo que `CC-COMERCIAL`.
@@ -411,7 +413,7 @@ em toda execução, no formato de `exemplos/envelope/politica-v4.json`:
 | `nota_fiscal_obrigatoria_acima_de` | número ≥ 0 | Limiar da RN-007 | sim |
 | `<tabela>.<categoria>` | objeto | Entrada de uma categoria em uma tabela | — |
 | `<tabela>.<categoria>.limite` | número ≥ 0 | Limite por data (RN-008); 0 significa não reembolsável (RN-001) | sim |
-| `<tabela>.<categoria>.periodicidade` | `dia` ou `diaria` | Ambos significam limite por data (RN-008) | sim |
+| `<tabela>.<categoria>.periodicidade` | texto: `dia` ou `diaria` após a normalização da RN-002 | Ambos significam limite por data (RN-008) | sim |
 
 `versao`, `vigencia`, `acrescimo_em_viagem_percentual`, `observacao` e campos
 não listados são informativos e não são validados.
@@ -423,13 +425,15 @@ política:
 - não tem algum campo obrigatório, ou tem campo obrigatório de tipo errado;
 - tem `moeda_base` diferente de `BRL`;
 - tem limite negativo, ou limite ou limiar que não é número;
-- tem periodicidade diferente de `dia` e `diaria`;
+- tem periodicidade que não é texto ou que, depois da normalização da RN-002,
+  é diferente de `dia` e `diaria`;
 - tem, depois da normalização da RN-002, duas categorias iguais na mesma tabela
   ou dois centros de custo iguais.
 
-**Origem:** política v4 (AMB-031, AMB-036)
+**Origem:** política v4 (AMB-031, AMB-036, AMB-039)
 **Aceite:** `politica-v4.json` → aceito. Execução sem documento de política →
-erro, sem saída. Limite `-1` → erro. `"periodicidade": "mes"` → erro. Documento
+erro, sem saída. Limite `-1` → erro. `"periodicidade": "mes"` → erro.
+`"Dia"` e `" dia "` → aceitos como `dia`; `"DIARIA"` → aceito como `diaria`. Documento
 sem `padrao` → erro. `"acrescimo_em_viagem_percentual": "x"` → ignorado.
 
 ### RN-016 — Política aplicável por centro de custo
@@ -445,15 +449,33 @@ pelo `colaborador.centro_custo`, comparado após a normalização da RN-002:
 4. centro de custo presente que não é texto → erro geral (RN-013).
 
 As justificativas de `LIMITE_DIARIO` e `CATEGORIA_NAO_REEMBOLSAVEL` citam a
-política usada: "centro de custo `<código>`", "política padrão" ou, no caso 3,
-"política padrão; centro de custo `<código>` não cadastrado".
-**Origem:** política v4 (AMB-018, AMB-019, AMB-020, AMB-021)
+política de onde veio a entrada da categoria usada na decisão:
+
+- caso 1: "política padrão";
+- caso 2, categoria que consta da tabela do centro: "centro de custo `<código>`";
+- caso 2, categoria herdada da padrão: "centro de custo `<código>` usando limite
+  herdado da política padrão";
+- caso 2, categoria que não consta nem do centro nem da padrão: "centro de
+  custo `<código>`";
+- caso 3: "política padrão; centro de custo `<código>` não cadastrado".
+
+No caso 2, `<código>` é a chave do centro de custo **como está escrita no
+documento de política**, e não como veio no documento de despesas. No caso 3,
+como não há chave, `<código>` é o valor do documento de despesas apenas sem os
+espaços do início e do fim; maiúsculas, minúsculas e acentos são mantidos
+(não é a normalização da RN-002).
+**Origem:** política v4 (AMB-018, AMB-019, AMB-020, AMB-021, AMB-037, AMB-038, AMB-040)
 **Aceite:** `exemplos/despesas-exemplo.json` (`CC-ENG-PLATAFORMA`) → limite de
 alimentação de 75,00. `despesas-envelope-cc-desconhecido.json` (`CC-SUPORTE-N2`)
 → política padrão; f-002 (hospedagem, 310,00) → 250,00. Documento sem
 `centro_custo` → política padrão. `CC-ADM` com hospedagem de 300,00 → limite
-250,00 herdado da padrão; 250,00, `limitado`. `"centro_custo": 42` → erro, sem
-saída.
+250,00 herdado da padrão; 250,00, `limitado`, com justificativa citando
+"centro de custo CC-ADM usando limite herdado da política padrão". `CC-ADM` com
+alimentação acima do limite → justificativa citando "centro de custo CC-ADM".
+`" cc-comercial "` → justificativas citando "centro de custo CC-COMERCIAL".
+`" CC-SUPORTE-N2 "` → política padrão; justificativas citando "política padrão;
+centro de custo CC-SUPORTE-N2 não cadastrado".
+`"centro_custo": 42` → erro, sem saída.
 
 ### RN-017 — Moeda da despesa
 
@@ -926,6 +948,53 @@ hospedagem vale uma diária (AMB-008). Outro valor → erro geral.
 **Justificativa:** é a semântica atual da RN-008.
 **Regra afetada:** RN-008, RN-015
 
+### AMB-037 — Justificativa de categoria herdada da padrão
+
+**Texto original da política v4:** a política não menciona o caso.
+**O que não está claro:** se a justificativa de `CC-ADM` com hospedagem (limite
+herdado da padrão) cita o centro de custo ou a política padrão.
+**Decisão:** cita os dois: "centro de custo CC-ADM usando limite herdado da
+política padrão". Vale para `LIMITE_DIARIO` e `CATEGORIA_NAO_REEMBOLSAVEL`.
+**Justificativa:** citar só o centro esconde de onde veio o limite; citar só a
+padrão sugere que o centro não foi reconhecido (caso 3 da RN-016).
+**Regra afetada:** RN-016, seção 4
+
+### AMB-038 — Grafia do centro de custo nas justificativas
+
+**Texto original da política v4:** a política não menciona o caso.
+**O que não está claro:** com `" cc-comercial "` na entrada, se a justificativa
+mostra o código como veio ou como está no documento de política.
+**Decisão:** usa a grafia da chave do documento de política (`CC-COMERCIAL`).
+**Justificativa:** a justificativa aponta para a tabela de onde veio a regra, e
+a grafia do documento de política é a canônica; a mesma entrada com grafias
+diferentes gera a mesma justificativa.
+**Regra afetada:** RN-016
+
+### AMB-039 — Grafia da periodicidade
+
+**Texto original da política v4:** `"periodicidade": "dia"` e `"diaria"`.
+**O que não está claro:** se `"Dia"` ou `" dia "` são aceitos ou são erro geral.
+**Decisão:** a periodicidade passa pela normalização da RN-002 antes da
+validação; depois dela, só `dia` e `diaria` são aceitos.
+**Justificativa:** mesmo raciocínio da AMB-013 e da AMB-020: diferença de
+grafia não muda o significado, e as chaves do documento já são normalizadas.
+**Regra afetada:** RN-002, RN-015
+
+### AMB-040 — Grafia do centro de custo não cadastrado na justificativa
+
+**Texto original da política v4:** a política não menciona o caso.
+**O que não está claro:** com centro de custo não cadastrado não há chave no
+documento de política para dar a grafia canônica (AMB-038). Fica a dúvida entre
+citar o valor exatamente como veio, sem os espaços das pontas ou normalizado
+pela RN-002.
+**Decisão:** remove só os espaços do início e do fim e mantém o resto como veio:
+`" CC-SUPORTE-N2 "` → `CC-SUPORTE-N2`. Maiúsculas, minúsculas e acentos não são
+alterados.
+**Justificativa:** espaços nas pontas são ruído sem significado; manter o resto
+como veio deixa reconhecível o código digitado e ajuda a achar o erro de
+digitação que levou à política padrão (AMB-019).
+**Regra afetada:** RN-016
+
 ---
 
 ## 7. Casos de borda
@@ -972,9 +1041,11 @@ hospedagem vale uma diária (AMB-008). Outro valor → erro geral.
 | Lista de despesas vazia | `despesas: []` | saída com `itens` vazio e total 0,00 | RN-013 |
 | Centro de custo ausente | documento sem `colaborador.centro_custo` | política padrão | RN-016 |
 | Centro de custo desconhecido | `CC-SUPORTE-N2` | política padrão; justificativa cita que não está cadastrado | RN-016 |
+| Centro de custo desconhecido com espaços nas pontas | `" CC-Suporte-N2 "` | política padrão; justificativa cita "centro de custo CC-Suporte-N2 não cadastrado" | RN-016 |
 | Centro de custo com grafia diferente | ` cc-comercial ` | tratado como `CC-COMERCIAL` | RN-002, RN-016 |
 | Centro de custo com tipo errado | `centro_custo`: 42 | erro, sem saída | RN-013, RN-016 |
-| Categoria ausente na tabela do centro | `CC-ADM`, hospedagem de 300,00 | herda 250,00 da padrão; 250,00, `limitado` | RN-016 |
+| Categoria ausente na tabela do centro | `CC-ADM`, hospedagem de 300,00 | herda 250,00 da padrão; 250,00, `limitado`; justificativa cita "centro de custo CC-ADM usando limite herdado da política padrão" | RN-016 |
+| Grafia do centro de custo na justificativa | ` cc-comercial `, alimentação de 95,00 | 90,00, `limitado`; justificativa cita "centro de custo CC-COMERCIAL" | RN-016 |
 | Categoria com limite zero | d-010: hospedagem, `CC-ENG-PLATAFORMA` | recusado, `CATEGORIA_NAO_REEMBOLSAVEL` | RN-001 |
 | Limite zero vem antes da nota fiscal | d-013: hospedagem, 690,00, sem nota, `CC-ENG-PLATAFORMA` | recusado, `CATEGORIA_NAO_REEMBOLSAVEL` | RN-001, seção 8 |
 | Representação em centro que não a tem | f-003: `representacao`, política padrão | recusado, `CATEGORIA_NAO_REEMBOLSAVEL` | RN-001 |
@@ -998,6 +1069,7 @@ hospedagem vale uma diária (AMB-008). Outro valor → erro geral.
 | Documento de câmbio ausente, tudo em reais | `exemplos/despesas-exemplo.json`, sem câmbio | processado normalmente | RN-018 |
 | Documento de política ausente | execução sem política | erro, sem saída | RN-015 |
 | Documento de política inválido | limite `-1`, sem `padrao` ou `"periodicidade": "mes"` | erro, sem saída | RN-015 |
+| Periodicidade com grafia diferente | `"periodicidade": "Dia"` ou `" diaria "` | aceita como `dia` / `diaria` | RN-002, RN-015 |
 | Documento de câmbio inválido | taxa 0 ou `"5,42"` | erro, sem saída | RN-018 |
 | Moedas base divergentes | câmbio com `moeda_base` diferente da política | erro, sem saída | RN-018 |
 
