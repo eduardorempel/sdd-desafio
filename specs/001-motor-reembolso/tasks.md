@@ -361,7 +361,7 @@ Com a T-031, as constantes de `politica.py` deixam de existir (fim da regra
     `centro_custo` numérico)
   - **Commit:**
 
-- [ ] **T-029** — Leitura e validação do documento de câmbio (`cambio.py` →
+- [x] **T-029** — Leitura e validação do documento de câmbio (`cambio.py` →
   objeto `Cambio`), opcional. Quando informado, é sempre validado. Códigos de
   moeda normalizados pela RN-017. Erro → `EntradaInvalida`. Ainda não é usado
   pelo motor.
