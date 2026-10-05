@@ -82,14 +82,21 @@ def categoria(despesa: Despesa, contexto: Contexto) -> Recusa | None:
 
 
 def duplicatas(vivas: list[Despesa], _contexto: Contexto) -> dict[int, Recusa]:
-    """RN-006: agrupa por data, categoria, fornecedor e valor considerado e mantém uma por grupo.
+    """RN-006: agrupa por data, categoria, fornecedor, moeda e valor informado arredondado na
+    moeda original, e mantém uma por grupo (DT-013).
 
     Fica a de menor posição entre as que têm nota fiscal; se nenhuma tiver, a de menor
-    posição. `vivas` chega em ordem de posição.
+    posição. `vivas` chega em ordem de posição e já sem as recusadas nas etapas 3 a 6.
     """
     grupos: dict[tuple, list[Despesa]] = defaultdict(list)
     for despesa in vivas:
-        chave = (despesa.data, despesa.categoria, despesa.fornecedor, despesa.valor_considerado)
+        chave = (
+            despesa.data,
+            despesa.categoria,
+            despesa.fornecedor,
+            despesa.moeda,
+            arredondar(despesa.valor_informado),
+        )
         grupos[chave].append(despesa)
 
     recusas: dict[int, Recusa] = {}

@@ -514,7 +514,7 @@ Com a T-031, as constantes de `politica.py` deixam de existir (fim da regra
   - **Teste:** `tests/test_rn007_nota_fiscal.py::test_rn007_compara_valor_convertido_*`
   - **Commit:**
 
-- [ ] **T-036** — Duplicatas exigem a mesma moeda e o mesmo valor informado
+- [x] **T-036** — Duplicatas exigem a mesma moeda e o mesmo valor informado
   arredondado para centavos na moeda original (em `BRL`, o próprio
   `valor_considerado`). Despesas recusadas por `COTACAO_INDISPONIVEL` não entram
   no grupo. Revisa a T-013.

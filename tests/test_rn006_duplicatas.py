@@ -1,6 +1,6 @@
 from decimal import Decimal
 
-from fabrica import despesa, documento, invalida, politica_aplicavel
+from fabrica import cambio, despesa, documento, invalida, politica_aplicavel
 
 from reembolso.modelo import Motivo, Status
 from reembolso.motor import calcular
@@ -101,3 +101,43 @@ def test_rn006_despesa_recusada_antes_nao_entra_no_grupo():
     )
     assert resultados[0].motivo == Motivo.DADOS_INVALIDOS
     assert resultados[1].status == Status.APROVADO
+
+
+def _taberna(posicao, id, valor="22.00", moeda="EUR"):
+    return despesa(
+        posicao, id=id, data="2026-07-14", fornecedor="Taberna do Chiado", valor=valor, moeda=moeda
+    )
+
+
+def _calcular(*despesas):
+    return calcular(documento(*despesas), politica_aplicavel("CC-COMERCIAL"), cambio())
+
+
+def test_rn006_mesma_moeda_estrangeira_e_duplicata():
+    _, segunda = _calcular(_taberna(1, "e-a"), _taberna(2, "e-b"))
+    assert segunda.status == Status.RECUSADO
+    assert segunda.motivo == Motivo.DUPLICATA
+    assert "e-a" in segunda.justificativa
+
+
+def test_rn006_mesmo_valor_em_reais_e_moedas_diferentes_nao_e_duplicata():
+    eur, brl = _calcular(_taberna(1, "e-a"), _taberna(2, "e-b", valor="130.46", moeda="BRL"))
+    assert eur.valor_considerado == brl.valor_considerado == Decimal("130.46")
+    assert brl.motivo != Motivo.DUPLICATA
+
+
+def test_rn006_mesmo_valor_original_e_moedas_diferentes_nao_e_duplicata():
+    _, usd = _calcular(_taberna(1, "e-a"), _taberna(2, "e-b", moeda="USD"))
+    assert usd.motivo != Motivo.DUPLICATA
+
+
+def test_rn006_valor_original_comparado_arredondado_na_moeda_original():
+    # 22,004 EUR e 22,00 EUR dão 130,49 e 130,46 em reais, mas são o mesmo valor original.
+    primeira, segunda = _calcular(_taberna(1, "e-a", valor="22.004"), _taberna(2, "e-b"))
+    assert primeira.valor_considerado != Decimal("130.46")
+    assert segunda.motivo == Motivo.DUPLICATA
+
+
+def test_rn006_cotacao_indisponivel_nao_entra_no_grupo():
+    resultados = _calcular(_taberna(1, "g-a", moeda="GBP"), _taberna(2, "g-b", moeda="GBP"))
+    assert [r.motivo for r in resultados] == [Motivo.COTACAO_INDISPONIVEL] * 2

@@ -61,7 +61,7 @@ def categoria_nao_reembolsavel(categoria: str, politica: Origem) -> str:
 
 def duplicata(id_mantida: str) -> str:
     return (
-        f"Duplicata de {id_mantida} (mesma data, categoria, fornecedor e valor); "
+        f"Duplicata de {id_mantida} (mesma data, categoria, fornecedor, moeda e valor); "
         f"mantida {id_mantida} (RN-006)."
     )
 
