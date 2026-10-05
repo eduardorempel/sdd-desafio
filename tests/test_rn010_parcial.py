@@ -20,3 +20,12 @@ def test_rn010_um_centavo_acima_do_limite_nao_e_recusada():
     item = calcular(documento(despesa(1, valor="60.01")), politica_aplicavel())[0]
     assert item.status == Status.LIMITADO
     assert item.valor_reembolsavel == Decimal("60.00")
+
+
+def test_rn010_e008_reembolsada_ate_o_limite_do_centro():
+    e008 = despesa(1, id="e-008", data="2026-07-23", valor="95.00")
+    item = calcular(documento(e008), politica_aplicavel("CC-COMERCIAL"))[0]
+    assert item.status == Status.LIMITADO
+    assert item.motivo == Motivo.LIMITE_DIARIO
+    assert item.valor_reembolsavel == Decimal("90.00")
+    assert "RN-010" in item.justificativa

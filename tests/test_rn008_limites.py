@@ -134,3 +134,87 @@ def test_rn008_dia_e_diaria_sao_limite_por_data(periodicidade):
         Decimal("20.00"),
         Decimal("40.00"),
     ]
+
+
+@pytest.mark.parametrize(
+    ("centro_custo", "categoria", "valor", "esperado"),
+    [
+        ("CC-COMERCIAL", "hospedagem", "1200.00", "400.00"),
+        ("CC-COMERCIAL", "representacao", "340.00", "300.00"),
+        ("CC-COMERCIAL", "alimentacao", "95.00", "90.00"),
+        ("CC-ADM", "hospedagem", "300.00", "250.00"),
+        ("CC-ADM", "alimentacao", "50.00", "45.00"),
+        ("CC-SUPORTE-N2", "hospedagem", "310.00", "250.00"),
+    ],
+    ids=["e-007", "e-001", "e-008", "cc-adm_hospedagem_herdada", "cc-adm_alimentacao", "f-002"],
+)
+def test_rn008_limite_da_tabela_efetiva(centro_custo, categoria, valor, esperado):
+    item = calcular(
+        documento(despesa(1, categoria=categoria, valor=valor)), politica_aplicavel(centro_custo)
+    )[0]
+    assert item.status == Status.LIMITADO
+    assert item.motivo == Motivo.LIMITE_DIARIO
+    assert item.valor_reembolsavel == Decimal(esperado)
+
+
+def test_rn008_e007_hospedagem_de_varias_noites_vale_uma_diaria():
+    e007 = despesa(1, id="e-007", data="2026-07-22", categoria="hospedagem", valor="1200.00")
+    item = calcular(documento(e007), politica_aplicavel("CC-COMERCIAL"))[0]
+    assert item.valor_reembolsavel == Decimal("400.00")
+    assert "R$ 400,00" in item.justificativa
+
+
+def test_rn008_representacao_nao_divide_limite_com_alimentacao():
+    jantar, representacao = calcular(
+        documento(
+            despesa(1, data="2026-07-13", categoria="alimentacao", valor="90.00"),
+            despesa(2, data="2026-07-13", categoria="representacao", valor="300.00"),
+        ),
+        politica_aplicavel("CC-COMERCIAL"),
+    )
+    assert jantar.status == Status.APROVADO
+    assert representacao.status == Status.APROVADO
+    assert representacao.valor_reembolsavel == Decimal("300.00")
+
+
+@pytest.mark.parametrize(
+    ("centro_custo", "categoria", "valor", "origem"),
+    [
+        (
+            "CC-ADM",
+            "hospedagem",
+            "300.00",
+            "centro de custo CC-ADM usando limite herdado da política padrão",
+        ),
+        ("CC-ADM", "alimentacao", "50.00", "centro de custo CC-ADM"),
+        (" cc-comercial ", "alimentacao", "95.00", "centro de custo CC-COMERCIAL"),
+        (
+            "CC-SUPORTE-N2",
+            "hospedagem",
+            "310.00",
+            "política padrão; centro de custo CC-SUPORTE-N2 não cadastrado",
+        ),
+        (
+            " CC-Suporte-N2 ",
+            "hospedagem",
+            "310.00",
+            "política padrão; centro de custo CC-Suporte-N2 não cadastrado",
+        ),
+        (None, "alimentacao", "61.00", "política padrão"),
+    ],
+    ids=[
+        "herdada",
+        "centro",
+        "centro_com_outra_grafia",
+        "nao_cadastrado",
+        "nao_cadastrado_com_espacos",
+        "padrao",
+    ],
+)
+def test_rn008_justificativa_cita_a_origem_do_limite(centro_custo, categoria, valor, origem):
+    item = calcular(
+        documento(despesa(1, categoria=categoria, valor=valor)), politica_aplicavel(centro_custo)
+    )[0]
+    assert item.status == Status.LIMITADO
+    assert f"({origem})" in item.justificativa
+    assert "RN-008" in item.justificativa

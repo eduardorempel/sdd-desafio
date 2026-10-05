@@ -9,6 +9,7 @@ _NOMES_CATEGORIA = {
     "alimentacao": "alimentação",
     "transporte_urbano": "transporte urbano",
     "hospedagem": "hospedagem",
+    "representacao": "representação",
 }
 
 
@@ -73,23 +74,23 @@ def _enumerar(ids: list[str]) -> str:
 def limite_diario(
     categoria: str,
     limite: Decimal,
+    politica: Origem,
     data: date,
     consumido: Decimal,
     consumidoras: list[str],
     excedente: Decimal,
 ) -> str:
-    """Cita o limite e, se houver, o valor já consumido no dia e quem o consumiu (spec §4)."""
+    """Cita o limite, a política de onde ele veio (RN-016) e, se houver, o valor já
+    consumido no dia e quem o consumiu (spec §4)."""
     nome = _NOMES_CATEGORIA.get(categoria, categoria)
+    limite_de = f"Limite diário de {nome} de {reais(limite)} ({origem(politica)})"
     if not consumidoras:
-        return (
-            f"Limite diário de {nome} de {reais(limite)} aplicado; "
-            f"excedente de {reais(excedente)} cortado (RN-008, RN-010)."
-        )
+        return f"{limite_de} aplicado; excedente de {reais(excedente)} cortado (RN-008, RN-010)."
     por = f"por {_enumerar(consumidoras)} em {data}"
     if consumido >= limite:
-        return f"Limite diário de {nome} de {reais(limite)} já consumido {por} (RN-008, RN-009)."
+        return f"{limite_de} já consumido {por} (RN-008, RN-009)."
     return (
-        f"Limite diário de {nome} de {reais(limite)}, com {reais(consumido)} já consumido {por}; "
+        f"{limite_de}, com {reais(consumido)} já consumido {por}; "
         f"excedente de {reais(excedente)} cortado (RN-008, RN-009, RN-010)."
     )
 

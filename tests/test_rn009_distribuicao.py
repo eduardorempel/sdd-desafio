@@ -103,3 +103,35 @@ def test_rn009_despesa_zero_depois_do_limite_consumido_e_aprovada():
     )
     assert zero.status == Status.APROVADO
     assert zero.valor_reembolsavel == Decimal("0.00")
+
+
+def test_rn009_d001_d002_no_centro_eng_plataforma():
+    d001, d002 = calcular(
+        documento(
+            despesa(1, id="d-001", data="2026-07-03", valor="72.50"),
+            despesa(2, id="d-002", data="2026-07-03", valor="38.00"),
+        ),
+        politica_aplicavel("CC-ENG-PLATAFORMA"),
+    )
+    assert d001.valor_reembolsavel == Decimal("72.50")
+    assert d001.status == Status.APROVADO
+    assert d002.valor_reembolsavel == Decimal("2.50")
+    assert d002.status == Status.LIMITADO
+    assert "R$ 75,00" in d002.justificativa
+    assert "R$ 72,50" in d002.justificativa
+    assert "d-001" in d002.justificativa
+    assert "(centro de custo CC-ENG-PLATAFORMA)" in d002.justificativa
+    assert "RN-009" in d002.justificativa
+
+
+def test_rn009_justificativa_de_limite_ja_consumido_cita_a_origem():
+    *_, terceira = calcular(
+        documento(
+            despesa(1, id="a-1", data="2026-07-03", valor="45.00"),
+            despesa(2, id="a-2", data="2026-07-03", valor="5.00"),
+        ),
+        politica_aplicavel("CC-ADM"),
+    )
+    assert terceira.valor_reembolsavel == Decimal("0.00")
+    assert "(centro de custo CC-ADM)" in terceira.justificativa
+    assert "a-1" in terceira.justificativa

@@ -443,7 +443,7 @@ Com a T-031, as constantes de `politica.py` deixam de existir (fim da regra
   - **Teste:** `tests/test_rn001_categoria.py`
   - **Commit:**
 
-- [ ] **T-033** — Etapa de limites pela tabela efetiva, incluindo
+- [x] **T-033** — Etapa de limites pela tabela efetiva, incluindo
   `representacao` como categoria independente, e justificativa de
   `LIMITE_DIARIO` citando a origem do limite. O acréscimo em viagem do documento
   não é aplicado. Revisa a T-015 e a T-016.

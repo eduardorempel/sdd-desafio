@@ -88,7 +88,9 @@ def nota_fiscal(despesa: Despesa, contexto: Contexto) -> Recusa | None:
 def limites_por_data(vivas: list[Despesa], contexto: Contexto) -> dict[int, Corte]:
     """RN-008, RN-009, RN-010: limite por data e categoria, consumido na ordem da posição.
 
-    O limite vem da política aplicável; `dia` e `diaria` são, as duas, limite por data.
+    O limite vem da tabela efetiva da política aplicável (RN-016), e a justificativa cita
+    a origem dele; `dia` e `diaria` são, as duas, limite por data. `representacao` é uma
+    categoria como as outras (AMB-023), e o acréscimo em viagem não é lido (AMB-035).
     Cada despesa recebe o menor valor entre o seu valor considerado e o saldo deixado
     pelas anteriores; o excedente é cortado. `vivas` chega em ordem de posição.
     """
@@ -96,7 +98,7 @@ def limites_por_data(vivas: list[Despesa], contexto: Contexto) -> dict[int, Cort
     consumidoras: dict[tuple, list[str]] = defaultdict(list)
     cortes: dict[int, Corte] = {}
     for despesa in vivas:
-        limite, _origem = contexto.politica.regra(despesa.categoria)
+        limite, origem = contexto.politica.regra(despesa.categoria)
         chave = (despesa.data, despesa.categoria)
         consumido = consumos[chave]
         reembolsavel = min(despesa.valor_considerado, limite - consumido)
@@ -107,6 +109,7 @@ def limites_por_data(vivas: list[Despesa], contexto: Contexto) -> dict[int, Cort
                 justificativas.limite_diario(
                     despesa.categoria,
                     limite,
+                    origem,
                     despesa.data,
                     consumido,
                     list(consumidoras[chave]),

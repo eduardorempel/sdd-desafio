@@ -3,7 +3,7 @@ from collections import defaultdict
 from decimal import Decimal
 from pathlib import Path
 
-from fabrica import politica_aplicavel
+from fabrica import despesa, documento, politica_aplicavel
 
 from reembolso.entrada import ler_documento
 from reembolso.modelo import Despesa
@@ -61,14 +61,41 @@ def test_rn011_hospedagem_no_mesmo_dia_nao_amplia_limite():
 
 
 def test_rn011_exemplo_nenhuma_despesa_acima_da_tabela_da_rn008():
-    documento = ler_documento(EXEMPLO.read_text(encoding="utf-8"))
-    resultados = calcular(documento, politica_aplicavel())
+    lido = ler_documento(EXEMPLO.read_text(encoding="utf-8"))
+    resultados = calcular(lido, politica_aplicavel())
     soma: dict[tuple, Decimal] = defaultdict(Decimal)
-    for despesa, resultado in zip(documento.despesas, resultados, strict=True):
-        assert isinstance(despesa, Despesa)
-        soma[(despesa.data, despesa.categoria)] += resultado.valor_reembolsavel
+    for lida, resultado in zip(lido.despesas, resultados, strict=True):
+        assert isinstance(lida, Despesa)
+        soma[(lida.data, lida.categoria)] += resultado.valor_reembolsavel
     politica = politica_aplicavel()
     for (_, categoria), total in soma.items():
         limite, _ = politica.regra(categoria)
         if limite is not None:
             assert total <= limite
+
+
+def test_rn011_acrescimo_em_viagem_do_documento_nao_e_aplicado():
+    politica = politica_aplicavel(
+        "CC-COMERCIAL",
+        documento={
+            "moeda_base": "BRL",
+            "padrao": {"alimentacao": {"limite": 60, "periodicidade": "dia"}},
+            "centros_custo": {
+                "CC-COMERCIAL": {
+                    "alimentacao": {"limite": 90, "periodicidade": "dia"},
+                    "hospedagem": {"limite": 400, "periodicidade": "diaria"},
+                }
+            },
+            "nota_fiscal_obrigatoria_acima_de": 100,
+            "acrescimo_em_viagem_percentual": 50,
+        },
+    )
+    alimentacao, hospedagem = calcular(
+        documento(
+            despesa(1, data="2026-07-22", categoria="alimentacao", valor="200.00"),
+            despesa(2, data="2026-07-22", categoria="hospedagem", valor="1200.00"),
+        ),
+        politica,
+    )
+    assert alimentacao.valor_reembolsavel == Decimal("90.00")
+    assert hospedagem.valor_reembolsavel == Decimal("400.00")

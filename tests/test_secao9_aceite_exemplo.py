@@ -73,11 +73,12 @@ def test_secao9_colaborador_e_periodo_copiados(saida):
 
 JUSTIFICATIVAS_SECAO4 = {
     "d-001": (
-        "Limite diário de alimentação de R$ 60,00 aplicado; "
+        "Limite diário de alimentação de R$ 60,00 (política padrão) aplicado; "
         "excedente de R$ 12,50 cortado (RN-008, RN-010)."
     ),
     "d-002": (
-        "Limite diário de alimentação de R$ 60,00 já consumido por d-001 em 2026-07-03 "
+        "Limite diário de alimentação de R$ 60,00 (política padrão) já consumido por d-001 "
+        "em 2026-07-03 "
         "(RN-008, RN-009)."
     ),
     "d-004": "Valor acima de R$ 100,00 sem nota fiscal (RN-007).",
