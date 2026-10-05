@@ -3,6 +3,8 @@
 from datetime import date
 from decimal import Decimal
 
+from reembolso.politica import Origem, TipoOrigem
+
 _NOMES_CATEGORIA = {
     "alimentacao": "alimentação",
     "transporte_urbano": "transporte urbano",
@@ -14,6 +16,19 @@ def reais(valor: Decimal) -> str:
     """Formata como `R$ 1.234,56`."""
     texto = f"{valor:,.2f}".replace(",", "_").replace(".", ",").replace("_", ".")
     return f"R$ {texto}"
+
+
+def origem(origem: Origem) -> str:
+    """Política de onde veio a entrada da categoria (RN-016, DT-011)."""
+    match origem.tipo:
+        case TipoOrigem.PADRAO:
+            return "política padrão"
+        case TipoOrigem.CENTRO:
+            return f"centro de custo {origem.codigo}"
+        case TipoOrigem.HERDADA:
+            return f"centro de custo {origem.codigo} usando limite herdado da política padrão"
+        case TipoOrigem.NAO_CADASTRADO:
+            return f"política padrão; centro de custo {origem.codigo} não cadastrado"
 
 
 def dados_invalidos(detalhe: str) -> str:

@@ -64,6 +64,7 @@ class Documento:
     inicio: date
     fim: date
     despesas: list[Despesa | Invalida]
+    centro_custo: str | None = None  # como veio (já validado como texto); None se ausente
 
 
 @dataclass(frozen=True)

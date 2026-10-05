@@ -81,6 +81,8 @@ def _documento(**alteracoes):
         {"despesas": _REMOVER},
         {"despesas": {"id": "d-001"}},
         {"despesas": [{"id": "d-001"}, "d-002"]},
+        {"colaborador__centro_custo": 42},
+        {"colaborador__centro_custo": None},
     ],
     ids=[
         "sem_periodo_fim",
@@ -99,6 +101,8 @@ def _documento(**alteracoes):
         "sem_despesas",
         "despesas_nao_lista",
         "item_nao_objeto",
+        "centro_custo_numerico",
+        "centro_custo_nulo",
     ],
 )
 def test_rn013_erro_geral_documento_invalido(alteracoes):
@@ -122,8 +126,18 @@ def test_rn013_erro_geral_nao_ocorre_com_despesas_vazia():
 
 
 def test_rn013_erro_geral_nao_ocorre_com_campos_informativos_e_desconhecidos():
-    doc = _documento(colaborador__nome=123, colaborador__centro_custo=None, extra={"x": 1})
+    doc = _documento(colaborador__nome=123, extra={"x": 1})
     validar_documento(doc)
+
+
+def test_rn013_erro_geral_nao_ocorre_com_centro_custo_texto_ausente_ou_vazio():
+    assert validar_documento(_documento(colaborador__centro_custo="  ")).centro_custo == "  "
+    assert validar_documento(_documento()).centro_custo is None
+
+
+def test_rn013_centro_custo_chega_ao_documento_como_veio():
+    texto = json.dumps(_documento(colaborador__centro_custo=" cc-comercial "))
+    assert ler_documento(texto).centro_custo == " cc-comercial "
 
 
 def test_rn013_erro_geral_nao_ocorre_com_inicio_igual_ao_fim():

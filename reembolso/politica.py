@@ -1,7 +1,9 @@
-"""Documento de política de reembolso (RN-015) e valores da política, como dados (plan §4)."""
+"""Documento de política (RN-015), política aplicável por centro de custo (RN-016) e
+valores da política, como dados (plan §4)."""
 
 from dataclasses import dataclass
 from decimal import Decimal
+from enum import Enum
 
 from reembolso.entrada import EntradaInvalida, ler_json, numero, texto_preenchido
 from reembolso.normalizacao import normalizar_moeda, normalizar_texto
@@ -120,3 +122,57 @@ def ler_politica(texto: str) -> Politica:
     except EntradaInvalida as erro:
         raise _erro(str(erro)) from erro
     return validar_politica(dados)
+
+
+class TipoOrigem(Enum):
+    """De qual tabela veio a entrada de uma categoria (RN-016)."""
+
+    PADRAO = "padrao"  # centro de custo ausente ou vazio
+    CENTRO = "centro"  # centro cadastrado; categoria na tabela do centro ou em nenhuma
+    HERDADA = "herdada"  # centro cadastrado; categoria só na padrão
+    NAO_CADASTRADO = "nao_cadastrado"  # centro informado e não cadastrado
+
+
+@dataclass(frozen=True)
+class Origem:
+    tipo: TipoOrigem
+    codigo: str | None  # código a citar na justificativa (AMB-038, AMB-040)
+
+
+@dataclass(frozen=True)
+class PoliticaAplicavel:
+    """Política escolhida para todas as despesas do documento (RN-016)."""
+
+    limiar_nota_fiscal: Decimal
+    padrao: dict[str, Decimal]
+    centro: Centro | None = None
+    nao_cadastrado: str | None = None  # código do centro informado e não cadastrado
+
+    def regra(self, categoria: str) -> tuple[Decimal | None, Origem]:
+        """Limite da categoria normalizada (`None` se não consta) e a origem dele."""
+        if self.centro is not None:
+            if categoria in self.centro.limites:
+                return self.centro.limites[categoria], Origem(TipoOrigem.CENTRO, self.centro.codigo)
+            if categoria in self.padrao:
+                return self.padrao[categoria], Origem(TipoOrigem.HERDADA, self.centro.codigo)
+            return None, Origem(TipoOrigem.CENTRO, self.centro.codigo)
+        if self.nao_cadastrado is not None:
+            return self.padrao.get(categoria), Origem(
+                TipoOrigem.NAO_CADASTRADO, self.nao_cadastrado
+            )
+        return self.padrao.get(categoria), Origem(TipoOrigem.PADRAO, None)
+
+
+def politica_aplicavel(politica: Politica, centro_custo: str | None) -> PoliticaAplicavel:
+    """Escolhe a tabela pelo centro de custo comparado após a normalização (RN-016, RN-002).
+
+    Centro cadastrado: categoria ausente herda da padrão (AMB-021). Não cadastrado: o
+    código citado é o da entrada só sem os espaços das pontas (AMB-040).
+    """
+    base = {"limiar_nota_fiscal": politica.limiar_nota_fiscal, "padrao": politica.padrao}
+    if centro_custo is None or not texto_preenchido(centro_custo):
+        return PoliticaAplicavel(**base)
+    centro = politica.centros.get(normalizar_texto(centro_custo))
+    if centro is None:
+        return PoliticaAplicavel(**base, nao_cadastrado=centro_custo.strip())
+    return PoliticaAplicavel(**base, centro=centro)

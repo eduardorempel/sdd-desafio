@@ -25,6 +25,7 @@ class Cabecalho:
     inicio: date
     fim: date
     itens: list[dict]
+    centro_custo: str | None
 
 
 def _rejeitar_constante(nome: str):
@@ -74,6 +75,9 @@ def validar_documento(dados: object) -> Cabecalho:
 
     if not texto_preenchido(colaborador.get("id")):
         raise EntradaInvalida("colaborador.id ausente, vazio ou não é texto")
+    centro_custo = colaborador.get("centro_custo")
+    if "centro_custo" in colaborador and not isinstance(centro_custo, str):
+        raise EntradaInvalida("colaborador.centro_custo não é texto")
 
     inicio = data_valida(periodo.get("inicio"))
     if inicio is None:
@@ -91,7 +95,7 @@ def validar_documento(dados: object) -> Cabecalho:
         if not isinstance(item, dict):
             raise EntradaInvalida(f"item {posicao} de despesas não é objeto")
 
-    return Cabecalho(colaborador, periodo, inicio, fim, itens)
+    return Cabecalho(colaborador, periodo, inicio, fim, itens, centro_custo)
 
 
 def numero(valor: object) -> Decimal | None:
@@ -180,4 +184,5 @@ def ler_documento(texto: str) -> Documento:
         despesas=[
             ler_despesa(item, posicao) for posicao, item in enumerate(cabecalho.itens, start=1)
         ],
+        centro_custo=cabecalho.centro_custo,
     )

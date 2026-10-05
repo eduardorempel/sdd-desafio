@@ -326,7 +326,7 @@ Com a T-031, as constantes de `politica.py` deixam de existir (fim da regra
   - **Teste:** `tests/test_rn015_politica.py`
   - **Commit:**
 
-- [ ] **T-028** — Política aplicável: `politica_aplicavel(politica, centro_custo)`
+- [x] **T-028** — Política aplicável: `politica_aplicavel(politica, centro_custo)`
   devolve uma `PoliticaAplicavel` cujo `regra(categoria)` dá o limite (ou `None`
   se a categoria não consta) e a `Origem(tipo, codigo)` daquela categoria. O
   `tipo` é `PADRAO`, `CENTRO`, `HERDADA` ou `NAO_CADASTRADO`. Com o centro
